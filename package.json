@@ -1,6 +1,7 @@
 {
   "name": "LL1",
   "version": "1.0.0",
+  "description": "Simple LL(1) parser written in TypeScript",
   "scripts": {
     "test": "yarn jest",
     "coverage": "yarn jest --coverage",
