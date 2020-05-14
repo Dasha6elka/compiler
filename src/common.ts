@@ -10,7 +10,7 @@ export interface LiteralOption {
     grammar: LiteralSet;
 }
 
-export type LiteralOptions = Set<LiteralOption>
+export type LiteralOptions = Set<LiteralOption>;
 
 export interface LiteralToken {
     rule: Literal;

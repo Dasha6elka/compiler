@@ -5,7 +5,8 @@
   "scripts": {
     "test": "yarn jest",
     "coverage": "yarn jest --coverage",
-    "docs": "typedoc --out docs src"
+    "docs": "typedoc --out docs src",
+    "pretty": "prettier --write src"
   },
   "author": "",
   "license": "ISC",
@@ -16,9 +17,16 @@
   },
   "devDependencies": {
     "@types/jest": "^25.2.2",
+    "husky": "^4.2.5",
     "jest": "^26.0.1",
     "prettier": "^2.0.5",
     "ts-jest": "^25.5.1",
     "typedoc": "^0.17.6"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn pretty && yarn docs && git add .",
+      "pre-push": "yarn coverage"
+    }
   }
 }

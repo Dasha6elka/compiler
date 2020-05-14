@@ -24,7 +24,7 @@ export namespace generator {
             const token: LiteralToken = {
                 rule: this._rule,
                 first: this.first,
-                pointer: null, // TODO: Добавить указатель
+                pointer: null,
                 offset: false,
                 error: this.last ? true : false,
                 stack: false,

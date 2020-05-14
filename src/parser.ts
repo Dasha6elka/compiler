@@ -1,4 +1,4 @@
-import { LiteralSet, Literal } from "./common";
+import { LiteralSet, Literal, TokenTable } from "./common";
 import { utils } from "./utils";
 
 export namespace parser {
@@ -27,6 +27,27 @@ export namespace parser {
             terminals: utils.LiteralSetFactory.create(terminalSymbols),
             nonTerminals: utils.LiteralSetFactory.create(nonTerminalSymbols),
         };
+    }
+
+    export function pointerize(
+        table: TokenTable,
+        nonTerminalsCount: number,
+        grammarCountsMap: number[],
+    ) {
+        for (const [key, value] of table) {
+            if (key === nonTerminalsCount) {
+                return;
+            }
+            let offset = nonTerminalsCount;
+            if (key !== 0) {
+                const allRowsBefore = Array.from(table.entries()).filter(([index]) => index < key);
+                offset = allRowsBefore.reduce(
+                    (acc, [index]) => acc + grammarCountsMap[index],
+                    nonTerminalsCount,
+                );
+            }
+            value.pointer = offset;
+        }
     }
 
     function flatten(acc: string[], value: string): string[] {

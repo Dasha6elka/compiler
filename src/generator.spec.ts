@@ -2,6 +2,7 @@ import { generator } from "./generator";
 import { TokenTable, Literal, LiteralToken, SymbolType, LiteralSet } from "./common";
 import { END } from "./constants";
 import { utils } from "./utils";
+import { parser } from "./parser";
 
 describe("generator", () => {
     describe("<S>->if/if", () => {
@@ -231,7 +232,7 @@ describe("generator", () => {
                 error: true,
                 rule: LITERALS.A,
                 offset: false,
-                pointer: null,
+                pointer: 3,
                 first: utils.LiteralSetFactory.create([LITERALS.FIVE]),
                 stack: false,
             });
@@ -240,7 +241,7 @@ describe("generator", () => {
                 error: false,
                 rule: LITERALS.B,
                 offset: false,
-                pointer: null,
+                pointer: 5,
                 first: utils.LiteralSetFactory.create([LITERALS.PLUS]),
                 stack: false,
             });
@@ -249,7 +250,7 @@ describe("generator", () => {
                 error: true,
                 rule: LITERALS.B,
                 offset: false,
-                pointer: null,
+                pointer: 8,
                 first: utils.LiteralSetFactory.create([LITERALS.END]),
                 stack: false,
             });
@@ -307,6 +308,8 @@ describe("generator", () => {
                 first: utils.LiteralSetFactory.create([LITERALS.END]),
                 stack: false,
             });
+
+            parser.pointerize(table, rules.length, [2, 3, 1]);
 
             for (const [key, values] of table) {
                 expect(result.has(key)).toBeTruthy();

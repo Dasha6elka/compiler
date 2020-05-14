@@ -39,7 +39,7 @@ export namespace set {
                 }
             }
         });
-        
+
         return literalOptions;
     }
 }
