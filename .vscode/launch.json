@@ -15,6 +15,16 @@
             ],
             "internalConsoleOptions": "neverOpen",
             "port": 9229
+        },
+        {
+            "name": "Launch App",
+            "type": "node",
+            "request": "launch",
+            "args": ["${workspaceRoot}/src/index.ts"],
+            "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
+            "sourceMaps": true,
+            "cwd": "${workspaceRoot}",
+            "protocol": "inspector",
         }
     ]
 }

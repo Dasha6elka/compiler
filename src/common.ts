@@ -55,3 +55,21 @@ export class LiteralIterator implements Iterator<Literal> {
         };
     }
 }
+
+export interface RightLiteralOption {
+    set: LiteralSet;
+    type: SymbolType;
+    last: boolean;
+    end: boolean;
+}
+
+export interface GrammarValue {
+    literal: Literal;
+    options: RightLiteralOption;
+}
+
+export interface RuleValue {
+    literal: Literal;
+    set: LiteralSet;
+    last: boolean;
+}

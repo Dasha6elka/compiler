@@ -1,5 +1,5 @@
 import { generator } from "./generator";
-import { TokenTable, Literal, LiteralToken, SymbolType, LiteralSet } from "./common";
+import { TokenTable, SymbolType, RuleValue, GrammarValue } from "./common";
 import { END } from "./constants";
 import { parser } from "./parser";
 import { factory } from "./factory";
@@ -11,34 +11,30 @@ describe("generator", () => {
             if: "if",
         };
 
-        const leftTokensTable = new Map<Literal, LiteralSet>();
-        leftTokensTable.set(LITERALS.S, factory.createLiteralSet([LITERALS.if]));
+        const rules: RuleValue[] = [
+            {
+                literal: LITERALS.S,
+                set: factory.createLiteralSet([LITERALS.if]),
+                last: true,
+            },
+        ];
 
-        const rightTerminals = new Map<Literal, LiteralSet>();
-        rightTerminals.set(LITERALS.if, factory.createLiteralSet([LITERALS.if]));
+        const grammars: GrammarValue[] = [
+            {
+                literal: LITERALS.if,
+                options: {
+                    set: factory.createLiteralSet([LITERALS.if]),
+                    type: SymbolType.Terminal,
+                    last: false,
+                    end: false,
+                },
+            },
+        ];
 
         it("should create table with 2 rows", () => {
-            let index = 0;
+            const table: TokenTable = generator.exec(rules, grammars);
 
-            const table: TokenTable = new Map<number, LiteralToken>();
-            const leftInputTokens = [];
-
-            for (const pair of leftTokensTable) {
-                const [key, values] = pair;
-                const row = new generator.RuleToken(index, key, values!, true);
-                leftInputTokens.push(row);
-                row.visit(table);
-                index++;
-            }
-
-            for (const pair of rightTerminals) {
-                const [key, values] = pair;
-                const row = new generator.GrammarToken(index, key, values!, SymbolType.Terminal, leftInputTokens, true);
-                row.visit(table);
-                index++;
-            }
-
-            const result: TokenTable = new Map<number, LiteralToken>();
+            const result: TokenTable = factory.createTokenTable();
             result.set(0, {
                 end: false,
                 error: true,
@@ -63,24 +59,6 @@ describe("generator", () => {
     });
 
     describe("<A>->5<B>/5  <B>->+5<B>/+  <B>->e/⊥", () => {
-        interface RightLiteralOption {
-            set: LiteralSet;
-            type: SymbolType;
-            last: boolean;
-            end: boolean;
-        }
-
-        interface GrammarValue {
-            literal: Literal;
-            options: RightLiteralOption;
-        }
-
-        interface RuleValue {
-            literal: Literal;
-            set: LiteralSet;
-            last: boolean;
-        }
-
         const LITERALS = {
             FIVE: "5",
             PLUS: "+",
@@ -165,61 +143,10 @@ describe("generator", () => {
         ];
 
         it("should create table with 9 rows", () => {
-            let index = 0;
+            const table: TokenTable = generator.exec(rules, grammars);
 
-            const table: TokenTable = new Map<number, LiteralToken>();
-            const leftInputTokens = [];
-
-            for (const pair of rules) {
-                const { literal: key, set: values } = pair;
-                const row = new generator.RuleToken(index, key, values!, pair.last);
-                leftInputTokens.push(row);
-                row.visit(table);
-                index++;
-            }
-
-            for (const pair of grammars) {
-                const { literal: key, options: values } = pair;
-
-                let row;
-                if (values.type === SymbolType.Terminal) {
-                    row = new generator.GrammarToken(
-                        index,
-                        key,
-                        values.set,
-                        values.type,
-                        leftInputTokens,
-                        values.last,
-                        values.end,
-                    );
-                } else if (values.type === SymbolType.Nonterminal) {
-                    row = new generator.GrammarToken(
-                        index,
-                        key,
-                        values.set,
-                        values.type,
-                        leftInputTokens,
-                        values.last,
-                        values.end,
-                    );
-                } else if (values.type === SymbolType.Empty) {
-                    row = new generator.GrammarToken(
-                        index,
-                        key,
-                        values.set,
-                        values.type,
-                        leftInputTokens,
-                        values.last,
-                        values.end,
-                    );
-                }
-
-                row?.visit(table);
-                index++;
-            }
-
-            const result: TokenTable = new Map<number, LiteralToken>();
-            result.set(0, {
+            const expected: TokenTable = factory.createTokenTable();
+            expected.set(0, {
                 end: false,
                 error: true,
                 rule: LITERALS.A,
@@ -228,7 +155,7 @@ describe("generator", () => {
                 first: factory.createLiteralSet([LITERALS.FIVE]),
                 stack: false,
             });
-            result.set(1, {
+            expected.set(1, {
                 end: false,
                 error: false,
                 rule: LITERALS.B,
@@ -237,7 +164,7 @@ describe("generator", () => {
                 first: factory.createLiteralSet([LITERALS.PLUS]),
                 stack: false,
             });
-            result.set(2, {
+            expected.set(2, {
                 end: false,
                 error: true,
                 rule: LITERALS.B,
@@ -246,7 +173,7 @@ describe("generator", () => {
                 first: factory.createLiteralSet([END]),
                 stack: false,
             });
-            result.set(3, {
+            expected.set(3, {
                 end: false,
                 error: true,
                 rule: LITERALS.FIVE,
@@ -255,7 +182,7 @@ describe("generator", () => {
                 first: factory.createLiteralSet([LITERALS.FIVE]),
                 stack: false,
             });
-            result.set(4, {
+            expected.set(4, {
                 end: false,
                 error: true,
                 rule: LITERALS.B,
@@ -264,7 +191,7 @@ describe("generator", () => {
                 first: factory.createLiteralSet([LITERALS.PLUS, END]),
                 stack: false,
             });
-            result.set(5, {
+            expected.set(5, {
                 end: false,
                 error: true,
                 rule: LITERALS.PLUS,
@@ -273,7 +200,7 @@ describe("generator", () => {
                 first: factory.createLiteralSet([LITERALS.PLUS]),
                 stack: false,
             });
-            result.set(6, {
+            expected.set(6, {
                 end: false,
                 error: true,
                 rule: LITERALS.FIVE,
@@ -282,7 +209,7 @@ describe("generator", () => {
                 first: factory.createLiteralSet([LITERALS.FIVE]),
                 stack: false,
             });
-            result.set(7, {
+            expected.set(7, {
                 end: false,
                 error: true,
                 rule: LITERALS.B,
@@ -291,7 +218,7 @@ describe("generator", () => {
                 first: factory.createLiteralSet([LITERALS.PLUS, END]),
                 stack: false,
             });
-            result.set(8, {
+            expected.set(8, {
                 end: true,
                 error: true,
                 rule: LITERALS.e,
@@ -301,11 +228,11 @@ describe("generator", () => {
                 stack: false,
             });
 
-            parser.pointerize(table, rules.length, [2, 3, 1]);
+            parser.pointerize(table, rules, [2, 3, 1]);
 
             for (const [key, values] of table) {
-                expect(result.has(key)).toBeTruthy();
-                const row = result.get(key);
+                expect(expected.has(key)).toBeTruthy();
+                const row = expected.get(key);
                 expect(values).toEqual(expect.objectContaining(row));
             }
         });

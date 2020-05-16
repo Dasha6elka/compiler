@@ -2,7 +2,7 @@ import { LiteralOptions, LiteralTable } from "./common";
 import { EMPTY, END } from "./constants";
 
 export namespace set {
-    export function exec(table: LiteralTable, options: LiteralOptions): LiteralOptions {
+    export function exec(table: LiteralTable, options: LiteralOptions): void {
         options.forEach(option => {
             const literals = table.get(option.rule);
             const firstGrammarLiteral = Array.from(option.grammar.values())[0];
@@ -18,7 +18,5 @@ export namespace set {
                 }
             }
         });
-
-        return options;
     }
 }

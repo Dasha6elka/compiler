@@ -52,7 +52,7 @@ describe("generator", () => {
         });
 
         it("should return rule with set", () => {
-            const actual: Set<LiteralOption> = set.exec(table, options);
+            set.exec(table, options);
 
             const expected: Set<LiteralOption> = new Set<LiteralOption>();
             expected.add({
@@ -77,7 +77,7 @@ describe("generator", () => {
             });
 
             Array.from(expected.values()).forEach((expectedValue, index) => {
-                const actualValue = Array.from(actual)[index];
+                const actualValue = Array.from(options)[index];
                 const actualArray = Array.from(expectedValue.first);
                 const expectedArray = Array.from(actualValue?.first);
                 expect(expectedArray).toEqual(expect.arrayContaining(actualArray));

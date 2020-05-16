@@ -1,4 +1,4 @@
-import { LiteralSet, TokenTable, LiteralTable } from "./common";
+import { LiteralSet, TokenTable, LiteralTable, LiteralOptions, RuleValue, GrammarValue, SymbolType } from "./common";
 import { utils } from "./utils";
 import { EMPTY, END } from "./constants";
 import { factory } from "./factory";
@@ -16,7 +16,6 @@ export namespace parser {
 
     type Transitions = Map<string, string[]>;
 
-    // const STACK_REG_EXP = new RegExp("<(?:(?!<|>).)+>|[a-zA-Z0-9]", "gi");
     const STACK_REG_EXP = new RegExp("<(?:(?!<|>).)+>|([^-<> ]+)", "gi");
     const RIGHT_PART_REG_EXP = new RegExp("(?<=->).*", "gim");
     const NON_TERMINALS_REG_EXP = new RegExp("<.+>(?=->)", "gim");
@@ -77,6 +76,89 @@ export namespace parser {
         return transitions;
     }
 
+    export function optionize(input: string): LiteralOptions {
+        const options: LiteralOptions = factory.createLiteralOptions();
+        const lines = utils.Input.normalize(input);
+
+        lines.forEach(line => {
+            const stack = (line.match(STACK_REG_EXP) ?? []).map(utils.NonTerminal.normalize);
+            const rule = stack[0];
+            stack.shift();
+            options.add({
+                rule,
+                grammar: factory.createLiteralSet(stack),
+                first: factory.createLiteralSet(),
+            });
+        });
+
+        return options;
+    }
+
+    export function rules(input: string): RuleValue[] {
+        const options = optionize(input);
+        return Array.from(options.values()).map((option, index, array) => {
+            const next = array[index + 1];
+            const grammar = Array.from(option.grammar.values());
+            const set = factory.createLiteralSet([grammar[0]]);
+            return {
+                literal: option.rule,
+                set,
+                last: !(next && next.rule === option.rule),
+            };
+        });
+    }
+
+    export function grammars(input: string, table: LiteralTable): GrammarValue[] {
+        const lines = utils.Input.normalize(input);
+        const { terminals, nonTerminals } = tokenize(input);
+
+        const isTerminal = (v: string): boolean => terminals.has(v);
+        const isNonTerminal = (v: string): boolean => nonTerminals.has(v);
+        const isEmpty = (v: string): boolean => v === EMPTY;
+
+        const grammars: GrammarValue[] = [];
+
+        lines.forEach((line, index, array) => {
+            const isLastLine = index === array.length - 1;
+            const stack = (line.match(STACK_REG_EXP) ?? []).map(utils.NonTerminal.normalize);
+            stack.shift();
+            stack.forEach((literal, index, array) => {
+                const next = array[index + 1];
+
+                const type = isEmpty(literal)
+                    ? SymbolType.Empty
+                    : isTerminal(literal)
+                    ? SymbolType.Terminal
+                    : SymbolType.Nonterminal;
+
+                const set = isTerminal(literal)
+                    ? factory.createLiteralSet([literal])
+                    : isEmpty(literal)
+                    ? factory.createLiteralSet([END])
+                    : table.get(literal)!; // TODO: unsafe cast
+
+                const end = isLastLine && !next;
+
+                const last =
+                    (isTerminal(literal) && next) || (isNonTerminal(literal) && isNonTerminal(next)) ? false : true;
+
+                const grammar = {
+                    literal: literal,
+                    options: {
+                        set,
+                        type,
+                        last,
+                        end,
+                    },
+                };
+
+                grammars.push(grammar);
+            });
+        });
+
+        return grammars;
+    }
+
     export function parse(input: string): LiteralTable {
         const transitionsMap = transitionize(input);
 
@@ -133,15 +215,15 @@ export namespace parser {
         return result;
     }
 
-    export function pointerize(table: TokenTable, nonTerminalsCount: number, grammarCountsMap: number[]) {
+    export function pointerize(table: TokenTable, rules: RuleValue[], map: number[]) {
         for (const [key, value] of table) {
-            if (key === nonTerminalsCount) {
+            if (key === rules.length) {
                 return;
             }
-            let offset = nonTerminalsCount;
+            let offset = rules.length;
             if (key !== 0) {
                 const allRowsBefore = Array.from(table.entries()).filter(([index]) => index < key);
-                offset = allRowsBefore.reduce((acc, [index]) => acc + grammarCountsMap[index], nonTerminalsCount);
+                offset = allRowsBefore.reduce((acc, [index]) => acc + map[index], rules.length);
             }
             value.pointer = offset;
         }

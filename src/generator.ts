@@ -1,11 +1,53 @@
-import { Literal, TokenTable, LiteralToken, SymbolType, InputToken, LiteralSet } from "./common";
+import {
+    Literal,
+    TokenTable,
+    LiteralToken,
+    SymbolType,
+    InputToken,
+    LiteralSet,
+    RuleValue,
+    GrammarValue,
+} from "./common";
 import { END } from "./constants";
-import { utils } from "./utils";
 import { exceptions } from "./exceptions";
 import { factory } from "./factory";
 
 export namespace generator {
-    export class RuleToken implements InputToken {
+    export function exec(rules: RuleValue[], grammars: GrammarValue[]): TokenTable {
+        const table = factory.createTokenTable();
+
+        const tokens: RuleToken[] = [];
+
+        let index = 0;
+
+        for (const pair of rules) {
+            const { literal: key, set: values } = pair;
+            const row = new RuleToken(index, key, values!, pair.last);
+            tokens.push(row);
+            row.visit(table);
+            index++;
+        }
+
+        for (const pair of grammars) {
+            const { literal: key, options: values } = pair;
+
+            let row: GrammarToken | null = null;
+            if (values.type === SymbolType.Terminal) {
+                row = new GrammarToken(index, key, values.set, values.type, tokens, values.last, values.end);
+            } else if (values.type === SymbolType.Nonterminal) {
+                row = new GrammarToken(index, key, values.set, values.type, tokens, values.last, values.end);
+            } else if (values.type === SymbolType.Empty) {
+                row = new GrammarToken(index, key, values.set, values.type, tokens, values.last, values.end);
+            }
+
+            row?.visit(table);
+            index++;
+        }
+
+        return table;
+    }
+
+    class RuleToken implements InputToken {
         constructor(private _index: number, private _rule: Literal, private first: LiteralSet, private last: boolean) {}
 
         get index() {
@@ -30,7 +72,7 @@ export namespace generator {
         }
     }
 
-    export class GrammarToken implements InputToken {
+    class GrammarToken implements InputToken {
         constructor(
             private index: number,
             private rule: Literal,

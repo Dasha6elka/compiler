@@ -1,4 +1,4 @@
-import { LiteralToken, TokenTable, Literal, LiteralSet, LiteralTable } from "./common";
+import { LiteralToken, TokenTable, Literal, LiteralSet, LiteralTable, LiteralOption, LiteralOptions } from "./common";
 
 export namespace factory {
     export function createTokenTable(iterable?: Iterable<LiteralToken>): TokenTable {
@@ -22,7 +22,11 @@ export namespace factory {
         return new Map<Literal, LiteralSet>(entries);
     }
 
-    export function createLiteralSet(iterable: Iterable<Literal>): LiteralSet {
+    export function createLiteralSet(iterable?: Iterable<Literal>): LiteralSet {
         return new Set<Literal>(iterable);
+    }
+
+    export function createLiteralOptions(iterable?: Iterable<LiteralOption>): LiteralOptions {
+        return new Set<LiteralOption>(iterable);
     }
 }
