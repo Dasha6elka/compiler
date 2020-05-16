@@ -6,7 +6,7 @@
     "start": "ts-node src/index.ts",
     "test": "yarn jest",
     "coverage": "yarn jest --coverage",
-    "docs": "typedoc --out docs src && cp .nojekyll docs",
+    "docs": "typedoc --mode library --exclude \"**/*+(index|.spec).ts\" --out docs src && cp .nojekyll docs",
     "pretty": "prettier --write src"
   },
   "author": "",
@@ -22,7 +22,7 @@
     "jest": "^26.0.1",
     "prettier": "^2.0.5",
     "ts-jest": "^25.5.1",
-    "typedoc": "^0.17.6"
+    "typedoc": "^0.17.0-3"
   },
   "husky": {
     "hooks": {
