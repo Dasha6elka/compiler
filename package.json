@@ -9,8 +9,6 @@
     "docs": "typedoc --mode library --exclude \"**/*+(index|.spec).ts\" --out docs src && cp .nojekyll docs",
     "pretty": "prettier --write src"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@types/node": "^14.0.1",
     "ts-node": "^8.10.1",
