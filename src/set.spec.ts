@@ -1,99 +1,87 @@
-import { Literal, LiteralOption, LiteralSet } from "./common";
+import { Literal, LiteralOption } from "./common";
 import { set } from "./set";
-import { utils } from "./utils";
+import { parser } from "./parser";
+import { factory } from "./factory";
+import { END } from "./constants";
 
 describe("generator", () => {
     describe("<S>->a<A>  <S>->b  <A>->c<A><S>  <A>->e", () => {
+        const input = `
+<S>->a<A>
+<S>->b
+<A>->c<A><S>
+<A>->e
+`;
         const TERMINALS = {
-            A: Symbol("A"),
-            S: Symbol("S"),
+            A: "A",
+            S: "S",
         };
-        const TERMINALS_LIST = utils.LiteralSetFactory.create([TERMINALS.A, TERMINALS.S]);
 
         const NON_TERMINALS = {
-            a: Symbol("a"),
-            b: Symbol("b"),
-            c: Symbol("c"),
-            e: Symbol("e"),
+            a: "a",
+            b: "b",
+            c: "c",
+            e: "e",
         };
-        const NON_TERMINALS_LIST = utils.LiteralSetFactory.create([
-            NON_TERMINALS.a,
-            NON_TERMINALS.b,
-            NON_TERMINALS.c,
-            NON_TERMINALS.e,
-        ]);
 
         const transitions = new Map<Literal, Literal>();
         transitions.set(TERMINALS.A, TERMINALS.S);
 
-        const table = new Map<Literal, LiteralSet>();
-        table.set(TERMINALS.S, utils.LiteralSetFactory.create([NON_TERMINALS.a, NON_TERMINALS.b]));
-        table.set(
-            TERMINALS.A,
-            utils.LiteralSetFactory.create([TERMINALS.S, NON_TERMINALS.c, NON_TERMINALS.e]),
-        );
+        const table = parser.parse(input);
 
-        const literalOptions = new Set<LiteralOption>();
-        literalOptions.add({
+        const options = new Set<LiteralOption>();
+        options.add({
             rule: TERMINALS.S,
-            grammar: utils.LiteralSetFactory.create([NON_TERMINALS.a, TERMINALS.A]),
-            first: utils.LiteralSetFactory.create([]),
+            grammar: factory.createLiteralSet([NON_TERMINALS.a, TERMINALS.A]),
+            first: factory.createLiteralSet([]),
         });
-        literalOptions.add({
+        options.add({
             rule: TERMINALS.S,
-            grammar: utils.LiteralSetFactory.create([NON_TERMINALS.b]),
-            first: utils.LiteralSetFactory.create([]),
+            grammar: factory.createLiteralSet([NON_TERMINALS.b]),
+            first: factory.createLiteralSet([]),
         });
-        literalOptions.add({
+        options.add({
             rule: TERMINALS.A,
-            grammar: utils.LiteralSetFactory.create([NON_TERMINALS.c, TERMINALS.A, TERMINALS.S]),
-            first: utils.LiteralSetFactory.create([]),
+            grammar: factory.createLiteralSet([NON_TERMINALS.c, TERMINALS.A, TERMINALS.S]),
+            first: factory.createLiteralSet([]),
         });
-        literalOptions.add({
+        options.add({
             rule: TERMINALS.A,
-            grammar: utils.LiteralSetFactory.create([NON_TERMINALS.e]),
-            first: utils.LiteralSetFactory.create([]),
+            grammar: factory.createLiteralSet([NON_TERMINALS.e]),
+            first: factory.createLiteralSet([]),
         });
 
         it("should return rule with set", () => {
-            const actual: Set<LiteralOption> = set.exec(
-                table,
-                TERMINALS_LIST,
-                NON_TERMINALS_LIST,
-                literalOptions,
-            );
+            const actual: Set<LiteralOption> = set.exec(table, options);
 
             const expected: Set<LiteralOption> = new Set<LiteralOption>();
             expected.add({
                 rule: TERMINALS.S,
-                grammar: utils.LiteralSetFactory.create([NON_TERMINALS.a, TERMINALS.A]),
-                first: utils.LiteralSetFactory.create([NON_TERMINALS.a]),
+                grammar: factory.createLiteralSet([NON_TERMINALS.a, TERMINALS.A]),
+                first: factory.createLiteralSet([NON_TERMINALS.a]),
             });
             expected.add({
                 rule: TERMINALS.S,
-                grammar: utils.LiteralSetFactory.create([NON_TERMINALS.b]),
-                first: utils.LiteralSetFactory.create([NON_TERMINALS.b]),
+                grammar: factory.createLiteralSet([NON_TERMINALS.b]),
+                first: factory.createLiteralSet([NON_TERMINALS.b]),
             });
             expected.add({
                 rule: TERMINALS.A,
-                grammar: utils.LiteralSetFactory.create([
-                    NON_TERMINALS.c,
-                    TERMINALS.A,
-                    TERMINALS.S,
-                ]),
-                first: utils.LiteralSetFactory.create([NON_TERMINALS.a]),
+                grammar: factory.createLiteralSet([NON_TERMINALS.c, TERMINALS.A, TERMINALS.S]),
+                first: factory.createLiteralSet([NON_TERMINALS.c]),
             });
             expected.add({
                 rule: TERMINALS.A,
-                grammar: utils.LiteralSetFactory.create([NON_TERMINALS.e]),
-                first: utils.LiteralSetFactory.create([
-                    NON_TERMINALS.e,
-                    NON_TERMINALS.a,
-                    NON_TERMINALS.b,
-                ]),
+                grammar: factory.createLiteralSet([NON_TERMINALS.e]),
+                first: factory.createLiteralSet([NON_TERMINALS.c, NON_TERMINALS.a, NON_TERMINALS.b, END]),
             });
 
-            expect(actual).toEqual(expect.objectContaining(expected));
+            Array.from(expected.values()).forEach((expectedValue, index) => {
+                const actualValue = Array.from(actual)[index];
+                const actualArray = Array.from(expectedValue.first);
+                const expectedArray = Array.from(actualValue?.first);
+                expect(expectedArray).toEqual(expect.arrayContaining(actualArray));
+            });
         });
     });
 });

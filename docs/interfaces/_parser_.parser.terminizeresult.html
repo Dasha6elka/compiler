@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ExecResult | LL1</title>
+	<title>TerminizeResult | LL1</title>
 	<meta name="description" content="Documentation for LL1">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -56,16 +56,16 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_analyzer_.html">&quot;analyzer&quot;</a>
+					<a href="../modules/_parser_.html">&quot;parser&quot;</a>
 				</li>
 				<li>
-					<a href="../modules/_analyzer_.analyzer.html">analyzer</a>
+					<a href="../modules/_parser_.parser.html">parser</a>
 				</li>
 				<li>
-					<a href="_analyzer_.analyzer.execresult.html">ExecResult</a>
+					<a href="_parser_.parser.terminizeresult.html">TerminizeResult</a>
 				</li>
 			</ul>
-			<h1>Interface ExecResult</h1>
+			<h1>Interface TerminizeResult</h1>
 		</div>
 	</div>
 </header>
@@ -76,7 +76,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">ExecResult</span>
+						<span class="target">TerminizeResult</span>
 					</li>
 				</ul>
 			</section>
@@ -84,35 +84,35 @@
 				<h2>Index</h2>
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
-						<section class="tsd-index-section ">
+						<section class="tsd-index-section tsd-is-not-exported">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_analyzer_.analyzer.execresult.html#error" class="tsd-kind-icon">error</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_analyzer_.analyzer.execresult.html#ok" class="tsd-kind-icon">ok</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-not-exported"><a href="_parser_.parser.terminizeresult.html#nonterminals" class="tsd-kind-icon">non<wbr>Terminals</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-interface tsd-is-not-exported"><a href="_parser_.parser.terminizeresult.html#terminals" class="tsd-kind-icon">terminals</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
-			<section class="tsd-panel-group tsd-member-group ">
+			<section class="tsd-panel-group tsd-member-group tsd-is-not-exported">
 				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="error" class="tsd-anchor"></a>
-					<h3>error</h3>
-					<div class="tsd-signature tsd-kind-icon">error<span class="tsd-signature-symbol">:</span> <a href="../modules/_analyzer_.analyzer.html#execerror" class="tsd-signature-type">ExecError</a><span class="tsd-signature-symbol"> | </span><span class="tsd-signature-type">null</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-not-exported">
+					<a name="nonterminals" class="tsd-anchor"></a>
+					<h3>non<wbr>Terminals</h3>
+					<div class="tsd-signature tsd-kind-icon">non<wbr>Terminals<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/analyzer.ts#L11">src/analyzer.ts:11</a></li>
+							<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L14">src/parser.ts:14</a></li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="ok" class="tsd-anchor"></a>
-					<h3>ok</h3>
-					<div class="tsd-signature tsd-kind-icon">ok<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface tsd-is-not-exported">
+					<a name="terminals" class="tsd-anchor"></a>
+					<h3>terminals</h3>
+					<div class="tsd-signature tsd-kind-icon">terminals<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/analyzer.ts#L10">src/analyzer.ts:10</a></li>
+							<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L13">src/parser.ts:13</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -130,24 +130,48 @@
 				<ul class="before-current">
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-namespace">
-						<a href="_analyzer_.analyzer.execresult.html" class="tsd-kind-icon">Exec<wbr>Result</a>
+					<li class="current tsd-kind-interface tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="_parser_.parser.terminizeresult.html" class="tsd-kind-icon">Terminize<wbr>Result</a>
 						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_analyzer_.analyzer.execresult.html#error" class="tsd-kind-icon">error</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-not-exported">
+								<a href="_parser_.parser.terminizeresult.html#nonterminals" class="tsd-kind-icon">non<wbr>Terminals</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_analyzer_.analyzer.execresult.html#ok" class="tsd-kind-icon">ok</a>
+							<li class=" tsd-kind-property tsd-parent-kind-interface tsd-is-not-exported">
+								<a href="_parser_.parser.terminizeresult.html#terminals" class="tsd-kind-icon">terminals</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
+					<li class=" tsd-kind-interface tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="_parser_.parser.tokenizeresult.html" class="tsd-kind-icon">Tokenize<wbr>Result</a>
+					</li>
 					<li class=" tsd-kind-type-alias tsd-parent-kind-namespace tsd-is-not-exported">
-						<a href="../modules/_analyzer_.analyzer.html#execerror" class="tsd-kind-icon">Exec<wbr>Error</a>
+						<a href="../modules/_parser_.parser.html#transitions" class="tsd-kind-icon">Transitions</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="../modules/_parser_.parser.html#non_terminals_reg_exp" class="tsd-kind-icon">NON_<wbr>TERMINALS_<wbr>REG_<wbr>EXP</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="../modules/_parser_.parser.html#right_part_reg_exp" class="tsd-kind-icon">RIGHT_<wbr>PART_<wbr>REG_<wbr>EXP</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="../modules/_parser_.parser.html#stack_reg_exp" class="tsd-kind-icon">STACK_<wbr>REG_<wbr>EXP</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-namespace">
-						<a href="../modules/_analyzer_.analyzer.html#exec" class="tsd-kind-icon">exec</a>
+						<a href="../modules/_parser_.parser.html#parse" class="tsd-kind-icon">parse</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-namespace">
+						<a href="../modules/_parser_.parser.html#pointerize" class="tsd-kind-icon">pointerize</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="../modules/_parser_.parser.html#terminize" class="tsd-kind-icon">terminize</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-namespace">
+						<a href="../modules/_parser_.parser.html#tokenize" class="tsd-kind-icon">tokenize</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-namespace">
+						<a href="../modules/_parser_.parser.html#transitionize" class="tsd-kind-icon">transitionize</a>
 					</li>
 				</ul>
 			</nav>

@@ -2,9 +2,7 @@ import { TokenTable, Pointer, Stack, Literal, LiteralToken } from "./common";
 import { exceptions } from "./exceptions";
 
 export namespace analyzer {
-    type ExecError =
-        | exceptions.analyzer.EmptyStackException
-        | exceptions.analyzer.IncorrectSequenceOrderException;
+    type ExecError = exceptions.analyzer.EmptyStackException | exceptions.analyzer.IncorrectSequenceOrderException;
 
     export interface ExecResult {
         ok: boolean;

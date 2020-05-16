@@ -1,21 +1,21 @@
 import { generator } from "./generator";
 import { TokenTable, Literal, LiteralToken, SymbolType, LiteralSet } from "./common";
 import { END } from "./constants";
-import { utils } from "./utils";
 import { parser } from "./parser";
+import { factory } from "./factory";
 
 describe("generator", () => {
     describe("<S>->if/if", () => {
         const LITERALS = {
-            S: Symbol("S"),
-            if: Symbol("if"),
+            S: "S",
+            if: "if",
         };
 
         const leftTokensTable = new Map<Literal, LiteralSet>();
-        leftTokensTable.set(LITERALS.S, utils.LiteralSetFactory.create([LITERALS.if]));
+        leftTokensTable.set(LITERALS.S, factory.createLiteralSet([LITERALS.if]));
 
         const rightTerminals = new Map<Literal, LiteralSet>();
-        rightTerminals.set(LITERALS.if, utils.LiteralSetFactory.create([LITERALS.if]));
+        rightTerminals.set(LITERALS.if, factory.createLiteralSet([LITERALS.if]));
 
         it("should create table with 2 rows", () => {
             let index = 0;
@@ -33,14 +33,7 @@ describe("generator", () => {
 
             for (const pair of rightTerminals) {
                 const [key, values] = pair;
-                const row = new generator.GrammarToken(
-                    index,
-                    key,
-                    values!,
-                    SymbolType.Terminal,
-                    leftInputTokens,
-                    true,
-                );
+                const row = new generator.GrammarToken(index, key, values!, SymbolType.Terminal, leftInputTokens, true);
                 row.visit(table);
                 index++;
             }
@@ -52,7 +45,7 @@ describe("generator", () => {
                 rule: LITERALS.S,
                 offset: false,
                 pointer: null,
-                first: utils.LiteralSetFactory.create([LITERALS.S]),
+                first: factory.createLiteralSet([LITERALS.S]),
                 stack: false,
             });
             result.set(1, {
@@ -61,7 +54,7 @@ describe("generator", () => {
                 rule: LITERALS.if,
                 offset: true,
                 pointer: null,
-                first: utils.LiteralSetFactory.create([LITERALS.if]),
+                first: factory.createLiteralSet([LITERALS.if]),
                 stack: false,
             });
 
@@ -89,28 +82,27 @@ describe("generator", () => {
         }
 
         const LITERALS = {
-            FIVE: Symbol("5"),
-            PLUS: Symbol("+"),
-            A: Symbol("A"),
-            B: Symbol("B"),
-            e: Symbol("e"),
-            END: END,
+            FIVE: "5",
+            PLUS: "+",
+            A: "A",
+            B: "B",
+            e: "e",
         };
 
         const rules: RuleValue[] = [
             {
                 literal: LITERALS.A,
-                set: utils.LiteralSetFactory.create([LITERALS.FIVE]),
+                set: factory.createLiteralSet([LITERALS.FIVE]),
                 last: true,
             },
             {
                 literal: LITERALS.B,
-                set: utils.LiteralSetFactory.create([LITERALS.PLUS]),
+                set: factory.createLiteralSet([LITERALS.PLUS]),
                 last: false,
             },
             {
                 literal: LITERALS.B,
-                set: utils.LiteralSetFactory.create([LITERALS.END]),
+                set: factory.createLiteralSet([END]),
                 last: true,
             },
         ];
@@ -119,7 +111,7 @@ describe("generator", () => {
             {
                 literal: LITERALS.FIVE,
                 options: {
-                    set: utils.LiteralSetFactory.create([LITERALS.FIVE]),
+                    set: factory.createLiteralSet([LITERALS.FIVE]),
                     type: SymbolType.Terminal,
                     last: false,
                     end: false,
@@ -128,7 +120,7 @@ describe("generator", () => {
             {
                 literal: LITERALS.B,
                 options: {
-                    set: utils.LiteralSetFactory.create([LITERALS.PLUS, LITERALS.END]),
+                    set: factory.createLiteralSet([LITERALS.PLUS, END]),
                     type: SymbolType.Nonterminal,
                     last: true,
                     end: false,
@@ -137,7 +129,7 @@ describe("generator", () => {
             {
                 literal: LITERALS.PLUS,
                 options: {
-                    set: utils.LiteralSetFactory.create([LITERALS.PLUS]),
+                    set: factory.createLiteralSet([LITERALS.PLUS]),
                     type: SymbolType.Terminal,
                     last: false,
                     end: false,
@@ -146,7 +138,7 @@ describe("generator", () => {
             {
                 literal: LITERALS.FIVE,
                 options: {
-                    set: utils.LiteralSetFactory.create([LITERALS.FIVE]),
+                    set: factory.createLiteralSet([LITERALS.FIVE]),
                     type: SymbolType.Terminal,
                     last: false,
                     end: false,
@@ -155,7 +147,7 @@ describe("generator", () => {
             {
                 literal: LITERALS.B,
                 options: {
-                    set: utils.LiteralSetFactory.create([LITERALS.PLUS, LITERALS.END]),
+                    set: factory.createLiteralSet([LITERALS.PLUS, END]),
                     type: SymbolType.Nonterminal,
                     last: true,
                     end: false,
@@ -164,7 +156,7 @@ describe("generator", () => {
             {
                 literal: LITERALS.e,
                 options: {
-                    set: utils.LiteralSetFactory.create([LITERALS.END]),
+                    set: factory.createLiteralSet([END]),
                     type: SymbolType.Empty,
                     last: true,
                     end: true,
@@ -233,7 +225,7 @@ describe("generator", () => {
                 rule: LITERALS.A,
                 offset: false,
                 pointer: 3,
-                first: utils.LiteralSetFactory.create([LITERALS.FIVE]),
+                first: factory.createLiteralSet([LITERALS.FIVE]),
                 stack: false,
             });
             result.set(1, {
@@ -242,7 +234,7 @@ describe("generator", () => {
                 rule: LITERALS.B,
                 offset: false,
                 pointer: 5,
-                first: utils.LiteralSetFactory.create([LITERALS.PLUS]),
+                first: factory.createLiteralSet([LITERALS.PLUS]),
                 stack: false,
             });
             result.set(2, {
@@ -251,7 +243,7 @@ describe("generator", () => {
                 rule: LITERALS.B,
                 offset: false,
                 pointer: 8,
-                first: utils.LiteralSetFactory.create([LITERALS.END]),
+                first: factory.createLiteralSet([END]),
                 stack: false,
             });
             result.set(3, {
@@ -260,7 +252,7 @@ describe("generator", () => {
                 rule: LITERALS.FIVE,
                 offset: true,
                 pointer: 4,
-                first: utils.LiteralSetFactory.create([LITERALS.FIVE]),
+                first: factory.createLiteralSet([LITERALS.FIVE]),
                 stack: false,
             });
             result.set(4, {
@@ -269,7 +261,7 @@ describe("generator", () => {
                 rule: LITERALS.B,
                 offset: false,
                 pointer: 1,
-                first: utils.LiteralSetFactory.create([LITERALS.PLUS, LITERALS.END]),
+                first: factory.createLiteralSet([LITERALS.PLUS, END]),
                 stack: false,
             });
             result.set(5, {
@@ -278,7 +270,7 @@ describe("generator", () => {
                 rule: LITERALS.PLUS,
                 offset: true,
                 pointer: 6,
-                first: utils.LiteralSetFactory.create([LITERALS.PLUS]),
+                first: factory.createLiteralSet([LITERALS.PLUS]),
                 stack: false,
             });
             result.set(6, {
@@ -287,7 +279,7 @@ describe("generator", () => {
                 rule: LITERALS.FIVE,
                 offset: true,
                 pointer: 7,
-                first: utils.LiteralSetFactory.create([LITERALS.FIVE]),
+                first: factory.createLiteralSet([LITERALS.FIVE]),
                 stack: false,
             });
             result.set(7, {
@@ -296,7 +288,7 @@ describe("generator", () => {
                 rule: LITERALS.B,
                 offset: false,
                 pointer: 1,
-                first: utils.LiteralSetFactory.create([LITERALS.PLUS, LITERALS.END]),
+                first: factory.createLiteralSet([LITERALS.PLUS, END]),
                 stack: false,
             });
             result.set(8, {
@@ -305,7 +297,7 @@ describe("generator", () => {
                 rule: LITERALS.e,
                 offset: false,
                 pointer: null,
-                first: utils.LiteralSetFactory.create([LITERALS.END]),
+                first: factory.createLiteralSet([END]),
                 stack: false,
             });
 

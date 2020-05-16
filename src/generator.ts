@@ -2,15 +2,11 @@ import { Literal, TokenTable, LiteralToken, SymbolType, InputToken, LiteralSet }
 import { END } from "./constants";
 import { utils } from "./utils";
 import { exceptions } from "./exceptions";
+import { factory } from "./factory";
 
 export namespace generator {
     export class RuleToken implements InputToken {
-        constructor(
-            private _index: number,
-            private _rule: Literal,
-            private first: LiteralSet,
-            private last: boolean,
-        ) {}
+        constructor(private _index: number, private _rule: Literal, private first: LiteralSet, private last: boolean) {}
 
         get index() {
             return this._index;
@@ -103,7 +99,7 @@ export namespace generator {
         private createEmptyToken(): LiteralToken {
             return {
                 rule: this.rule,
-                first: utils.LiteralSetFactory.create([END]),
+                first: factory.createLiteralSet([END]),
                 pointer: null,
                 offset: false,
                 error: true,

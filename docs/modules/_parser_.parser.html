@@ -76,47 +76,105 @@
 						<section class="tsd-index-section tsd-is-not-exported">
 							<h3>Interfaces</h3>
 							<ul class="tsd-index-list">
+								<li class="tsd-kind-interface tsd-parent-kind-namespace tsd-is-not-exported"><a href="../interfaces/_parser_.parser.terminizeresult.html" class="tsd-kind-icon">Terminize<wbr>Result</a></li>
 								<li class="tsd-kind-interface tsd-parent-kind-namespace tsd-is-not-exported"><a href="../interfaces/_parser_.parser.tokenizeresult.html" class="tsd-kind-icon">Tokenize<wbr>Result</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section tsd-is-not-exported">
+							<h3>Type aliases</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-type-alias tsd-parent-kind-namespace tsd-is-not-exported"><a href="_parser_.parser.html#transitions" class="tsd-kind-icon">Transitions</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section tsd-is-not-exported">
+							<h3>Variables</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported"><a href="_parser_.parser.html#non_terminals_reg_exp" class="tsd-kind-icon">NON_<wbr>TERMINALS_<wbr>REG_<wbr>EXP</a></li>
+								<li class="tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported"><a href="_parser_.parser.html#right_part_reg_exp" class="tsd-kind-icon">RIGHT_<wbr>PART_<wbr>REG_<wbr>EXP</a></li>
+								<li class="tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported"><a href="_parser_.parser.html#stack_reg_exp" class="tsd-kind-icon">STACK_<wbr>REG_<wbr>EXP</a></li>
 							</ul>
 						</section>
 						<section class="tsd-index-section ">
 							<h3>Functions</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported"><a href="_parser_.parser.html#flatten" class="tsd-kind-icon">flatten</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-namespace"><a href="_parser_.parser.html#parse" class="tsd-kind-icon">parse</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-namespace"><a href="_parser_.parser.html#pointerize" class="tsd-kind-icon">pointerize</a></li>
-								<li class="tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported"><a href="_parser_.parser.html#toliteral" class="tsd-kind-icon">to<wbr>Literal</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported"><a href="_parser_.parser.html#terminize" class="tsd-kind-icon">terminize</a></li>
 								<li class="tsd-kind-function tsd-parent-kind-namespace"><a href="_parser_.parser.html#tokenize" class="tsd-kind-icon">tokenize</a></li>
-								<li class="tsd-kind-function tsd-parent-kind-namespace tsd-has-type-parameter tsd-is-not-exported"><a href="_parser_.parser.html#uniq" class="tsd-kind-icon">uniq</a></li>
+								<li class="tsd-kind-function tsd-parent-kind-namespace"><a href="_parser_.parser.html#transitionize" class="tsd-kind-icon">transitionize</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
+			<section class="tsd-panel-group tsd-member-group tsd-is-not-exported">
+				<h2>Type aliases</h2>
+				<section class="tsd-panel tsd-member tsd-kind-type-alias tsd-parent-kind-namespace tsd-is-not-exported">
+					<a name="transitions" class="tsd-anchor"></a>
+					<h3>Transitions</h3>
+					<div class="tsd-signature tsd-kind-icon">Transitions<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Map</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">, </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">&gt;</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L17">src/parser.ts:17</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group tsd-is-not-exported">
+				<h2>Variables</h2>
+				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported">
+					<a name="non_terminals_reg_exp" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> NON_<wbr>TERMINALS_<wbr>REG_<wbr>EXP</h3>
+					<div class="tsd-signature tsd-kind-icon">NON_<wbr>TERMINALS_<wbr>REG_<wbr>EXP<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RegExp</span><span class="tsd-signature-symbol"> = new RegExp(&quot;&lt;.+&gt;(?&#x3D;-&gt;)&quot;, &quot;gim&quot;)</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L22">src/parser.ts:22</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported">
+					<a name="right_part_reg_exp" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> RIGHT_<wbr>PART_<wbr>REG_<wbr>EXP</h3>
+					<div class="tsd-signature tsd-kind-icon">RIGHT_<wbr>PART_<wbr>REG_<wbr>EXP<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RegExp</span><span class="tsd-signature-symbol"> = new RegExp(&quot;(?&lt;&#x3D;-&gt;).*&quot;, &quot;gim&quot;)</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L21">src/parser.ts:21</a></li>
+						</ul>
+					</aside>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported">
+					<a name="stack_reg_exp" class="tsd-anchor"></a>
+					<h3><span class="tsd-flag ts-flagConst">Const</span> STACK_<wbr>REG_<wbr>EXP</h3>
+					<div class="tsd-signature tsd-kind-icon">STACK_<wbr>REG_<wbr>EXP<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">RegExp</span><span class="tsd-signature-symbol"> = new RegExp(&quot;&lt;(?:(?!&lt;|&gt;).)+&gt;|([^-&lt;&gt; ]+)&quot;, &quot;gi&quot;)</span></div>
+					<aside class="tsd-sources">
+						<ul>
+							<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L20">src/parser.ts:20</a></li>
+						</ul>
+					</aside>
+				</section>
+			</section>
 			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Functions</h2>
-				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported">
-					<a name="flatten" class="tsd-anchor"></a>
-					<h3>flatten</h3>
-					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">flatten<span class="tsd-signature-symbol">(</span>acc<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span>, value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></li>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-namespace">
+					<a name="parse" class="tsd-anchor"></a>
+					<h3>parse</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-namespace">
+						<li class="tsd-signature tsd-kind-icon">parse<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_common_.html#literaltable" class="tsd-signature-type">LiteralTable</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/4186cd4/src/parser.ts#L53">src/parser.ts:53</a></li>
+									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L80">src/parser.ts:80</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>acc: <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h5>
-								</li>
-								<li>
-									<h5>value: <span class="tsd-signature-type">string</span></h5>
+									<h5>input: <span class="tsd-signature-type">string</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">[]</span></h4>
+							<h4 class="tsd-returns-title">Returns <a href="_common_.html#literaltable" class="tsd-signature-type">LiteralTable</a></h4>
 						</li>
 					</ul>
 				</section>
@@ -130,7 +188,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/4186cd4/src/parser.ts#L32">src/parser.ts:32</a></li>
+									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L136">src/parser.ts:136</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -150,25 +208,25 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported">
-					<a name="toliteral" class="tsd-anchor"></a>
-					<h3>to<wbr>Literal</h3>
+					<a name="terminize" class="tsd-anchor"></a>
+					<h3>terminize</h3>
 					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">to<wbr>Literal<span class="tsd-signature-symbol">(</span>value<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_common_.html#literal" class="tsd-signature-type">Literal</a></li>
+						<li class="tsd-signature tsd-kind-icon">terminize<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="../interfaces/_parser_.parser.terminizeresult.html" class="tsd-signature-type">TerminizeResult</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/4186cd4/src/parser.ts#L57">src/parser.ts:57</a></li>
+									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L24">src/parser.ts:24</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>value: <span class="tsd-signature-type">string</span></h5>
+									<h5>input: <span class="tsd-signature-type">string</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <a href="_common_.html#literal" class="tsd-signature-type">Literal</a></h4>
+							<h4 class="tsd-returns-title">Returns <a href="../interfaces/_parser_.parser.terminizeresult.html" class="tsd-signature-type">TerminizeResult</a></h4>
 						</li>
 					</ul>
 				</section>
@@ -182,7 +240,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/4186cd4/src/parser.ts#L10">src/parser.ts:10</a></li>
+									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L40">src/parser.ts:40</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -195,32 +253,26 @@
 						</li>
 					</ul>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-namespace tsd-has-type-parameter tsd-is-not-exported">
-					<a name="uniq" class="tsd-anchor"></a>
-					<h3>uniq</h3>
-					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-namespace tsd-has-type-parameter tsd-is-not-exported">
-						<li class="tsd-signature tsd-kind-icon">uniq&lt;T&gt;<span class="tsd-signature-symbol">(</span>array<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></li>
+				<section class="tsd-panel tsd-member tsd-kind-function tsd-parent-kind-namespace">
+					<a name="transitionize" class="tsd-anchor"></a>
+					<h3>transitionize</h3>
+					<ul class="tsd-signatures tsd-kind-function tsd-parent-kind-namespace">
+						<li class="tsd-signature tsd-kind-icon">transitionize<span class="tsd-signature-symbol">(</span>input<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">string</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_parser_.parser.html#transitions" class="tsd-signature-type">Transitions</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/4186cd4/src/parser.ts#L61">src/parser.ts:61</a></li>
+									<li>Defined in <a href="https://github.com/Dasha6elka/LL1/blob/f8c0bcb/src/parser.ts#L49">src/parser.ts:49</a></li>
 								</ul>
 							</aside>
-							<h4 class="tsd-type-parameters-title">Type parameters</h4>
-							<ul class="tsd-type-parameters">
-								<li>
-									<h4>T</h4>
-								</li>
-							</ul>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
-									<h5>array: <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></h5>
+									<h5>input: <span class="tsd-signature-type">string</span></h5>
 								</li>
 							</ul>
-							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">T</span><span class="tsd-signature-symbol">[]</span></h4>
+							<h4 class="tsd-returns-title">Returns <a href="_parser_.parser.html#transitions" class="tsd-signature-type">Transitions</a></h4>
 						</li>
 					</ul>
 				</section>
@@ -237,22 +289,37 @@
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
 					<li class=" tsd-kind-interface tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="../interfaces/_parser_.parser.terminizeresult.html" class="tsd-kind-icon">Terminize<wbr>Result</a>
+					</li>
+					<li class=" tsd-kind-interface tsd-parent-kind-namespace tsd-is-not-exported">
 						<a href="../interfaces/_parser_.parser.tokenizeresult.html" class="tsd-kind-icon">Tokenize<wbr>Result</a>
 					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported">
-						<a href="_parser_.parser.html#flatten" class="tsd-kind-icon">flatten</a>
+					<li class=" tsd-kind-type-alias tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="_parser_.parser.html#transitions" class="tsd-kind-icon">Transitions</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="_parser_.parser.html#non_terminals_reg_exp" class="tsd-kind-icon">NON_<wbr>TERMINALS_<wbr>REG_<wbr>EXP</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="_parser_.parser.html#right_part_reg_exp" class="tsd-kind-icon">RIGHT_<wbr>PART_<wbr>REG_<wbr>EXP</a>
+					</li>
+					<li class=" tsd-kind-variable tsd-parent-kind-namespace tsd-is-not-exported">
+						<a href="_parser_.parser.html#stack_reg_exp" class="tsd-kind-icon">STACK_<wbr>REG_<wbr>EXP</a>
+					</li>
+					<li class=" tsd-kind-function tsd-parent-kind-namespace">
+						<a href="_parser_.parser.html#parse" class="tsd-kind-icon">parse</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-namespace">
 						<a href="_parser_.parser.html#pointerize" class="tsd-kind-icon">pointerize</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-namespace tsd-is-not-exported">
-						<a href="_parser_.parser.html#toliteral" class="tsd-kind-icon">to<wbr>Literal</a>
+						<a href="_parser_.parser.html#terminize" class="tsd-kind-icon">terminize</a>
 					</li>
 					<li class=" tsd-kind-function tsd-parent-kind-namespace">
 						<a href="_parser_.parser.html#tokenize" class="tsd-kind-icon">tokenize</a>
 					</li>
-					<li class=" tsd-kind-function tsd-parent-kind-namespace tsd-has-type-parameter tsd-is-not-exported">
-						<a href="_parser_.parser.html#uniq" class="tsd-kind-icon">uniq</a>
+					<li class=" tsd-kind-function tsd-parent-kind-namespace">
+						<a href="_parser_.parser.html#transitionize" class="tsd-kind-icon">transitionize</a>
 					</li>
 				</ul>
 			</nav>

@@ -1,8 +1,8 @@
-export type Literal = Symbol;
+export type Literal = string;
 
 export type Pointer = number | null;
 
-export type LiteralSet = Set<Literal>;
+export type LiteralSet = Set<string>;
 
 export interface LiteralOption {
     rule: Literal;
@@ -23,6 +23,8 @@ export interface LiteralToken {
 }
 
 export type TokenTable = Map<number, LiteralToken>;
+
+export type LiteralTable = Map<Literal, LiteralSet>;
 
 export type Stack<T> = T[];
 
