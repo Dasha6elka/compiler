@@ -326,5 +326,44 @@ describe("analyzer", () => {
                 error: null,
             });
         });
+
+        it("should pass on 5+i*(i)+i", () => {
+            const input = [
+                LITERALS.FIVE,
+                LITERALS.PLUS,
+                LITERALS.i,
+                LITERALS.MUL,
+                LITERALS.OB,
+                LITERALS.i,
+                LITERALS.CB,
+                LITERALS.PLUS,
+                LITERALS.i,
+                END,
+            ];
+            const result = analyzer.exec(table, new LiteralIterator(input));
+            expect(result).toMatchObject({
+                ok: true,
+                error: null,
+            });
+        });
+
+        it("should not pass on 5+i*(i)+i", () => {
+            const input = [
+                LITERALS.FIVE,
+                LITERALS.PLUS,
+                LITERALS.i,
+                LITERALS.MUL,
+                LITERALS.OB,
+                LITERALS.i,
+                LITERALS.CB,
+                LITERALS.PLUS,
+                END,
+            ];
+            const result = analyzer.exec(table, new LiteralIterator(input));
+            expect(result).toMatchObject({
+                ok: false,
+                error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+            });
+        });
     });
 });

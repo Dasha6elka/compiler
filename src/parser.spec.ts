@@ -55,4 +55,127 @@ describe("parser", () => {
             expect(values).toEqual(expect.arrayContaining(row));
         }
     });
+
+    describe("factorization first", () => {
+        const input = `
+<A>-><B><C>
+<A>-><D><B>
+<A>->a x<F>
+`;
+
+        const actual = parser.factorization(input);
+        const expected = `<A>-><B> <C>
+<A>-><D> <B>
+<A>->a x <F>
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("factorization second", () => {
+        const input = `
+<A>-><B><C>
+<A>-><B><C><D>
+<A>->a x<F>
+<A>->a x y
+<A>->a x z
+`;
+
+        const actual = parser.factorization(input);
+        const expected = `<A>-><B> <C> <A0>
+<A0>->e
+<A0>-><D>
+<A>->a x <B0>
+<B0>-><F>
+<B0>->y
+<B0>->z
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("factorization reverse", () => {
+        const input = `
+<A>-><B><C>
+<A>-><D><B><C>
+<A>-><F>a x
+<A>->y a x
+<A>->z a x
+`;
+
+        const actual = parser.factorization(input);
+        const expected = `<A>-><A0> <B> <C>
+<A0>->e
+<A0>-><D>
+<A>-><B0> a x
+<B0>-><F>
+<B0>->y
+<B0>->z
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("factorization reverse and not reverse", () => {
+        const input = `
+<A>-><B><C>
+<A>-><D><B><C>
+<A>->a x<F>
+<A>->a x y
+<A>->a x z
+`;
+
+        const actual = parser.factorization(input);
+        const expected = `<A>->a x <A0>
+<A0>-><F>
+<A0>->y
+<A0>->z
+<A>-><B0> <B> <C>
+<B0>->e
+<B0>-><D>
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("factorization with one element", () => {
+        const input = `
+<A>-><B><C>
+<A>-><B><D>
+<A>->a<F>
+<A>->a y
+<A>->a z
+`;
+
+        const actual = parser.factorization(input);
+        const expected = `<A>-><B> <A0>
+<A0>-><C>
+<A0>-><D>
+<A>->a <B0>
+<B0>-><F>
+<B0>->y
+<B0>->z
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("factorization with more symbols after same symbols", () => {
+        const input = `
+<A>->a x<F>⊥
+<A>->a x y
+<A>->a x z
+<F>->m
+`;
+
+        const actual = parser.factorization(input);
+        const expected = `<A>->a x <A0>
+<A0>-><F> ⊥
+<A0>->y
+<A0>->z
+<F>->m
+`;
+
+        expect(actual).toEqual(expected);
+    });
 });

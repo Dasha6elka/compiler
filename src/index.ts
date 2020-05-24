@@ -5,21 +5,21 @@ import { analyzer } from "./analyzer";
 
 const args = [
     `
-<S>->a<A>
-<S>->b
-<A>->c<A><S>
-<A>->e
+<A>->a x<F>⊥
+<A>->a x y
+<F>->m
 `,
-    "a,c,c,a,c,b",
+    "a,x,m,⊥",
 ];
 
 function main() {
-    const input = args[0].trim();
+    let input = args[0].trim();
+    input = parser.factorization(input);
     const seq = args[1].split(",")[Symbol.iterator]();
     const options = parser.optionize(input);
     const table = parser.parse(input);
-    set.exec(table, options);
-    const rules = parser.rules(input);
+    set.exec(table, options, input);
+    const rules = parser.rules(input, options);
     const grammars = parser.grammars(input, table);
     const tokens = generator.exec(rules, grammars);
     const map = Array.from(options).map(option => option.grammar.size);

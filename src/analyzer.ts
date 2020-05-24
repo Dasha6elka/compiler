@@ -1,5 +1,6 @@
 import { TokenTable, Pointer, Stack, Literal, LiteralToken } from "./common";
 import { exceptions } from "./exceptions";
+import { EMPTY, END } from "./constants";
 
 export namespace analyzer {
     type ExecError = exceptions.analyzer.EmptyStackException | exceptions.analyzer.IncorrectSequenceOrderException;
@@ -19,10 +20,12 @@ export namespace analyzer {
         let offset: Literal | null = seq.next().value ?? null;
 
         while (!(end && !stack.length && top?.end)) {
-            if (!top?.error && offset && !top?.first.has(offset)) {
+            if (!top?.error && ((offset && !top?.first.has(offset)) || offset == null)) {
                 const array = Array.from(table.entries());
-                const [index] = array.find(([, token]) => token === top)!;
-                top = table.get(index + 1);
+                while (offset && !top?.first.has(offset) && !top?.error) {
+                    const [index] = array.find(([, token]) => token === top)!;
+                    top = table.get(index + 1);
+                }
             }
 
             if (top?.stack) {
@@ -31,7 +34,7 @@ export namespace analyzer {
                 stack.push(index + 1);
             }
 
-            if (top?.error && offset && !top?.first.has(offset)) {
+            if (top?.error && offset && !top?.first.has(offset) && offset === EMPTY) {
                 const result: ExecResult = {
                     ok: false,
                     error: new exceptions.analyzer.IncorrectSequenceOrderException(),
@@ -39,10 +42,20 @@ export namespace analyzer {
                 return result;
             }
 
-            if (top?.offset) {
+            if (offset && top?.first.has(offset) && top?.offset) {
                 const it = seq.next();
                 offset = it.value ?? null;
                 end = !!it.done;
+            } else if (offset && !top?.first.has(offset) && top?.offset) {
+                const result: ExecResult = {
+                    ok: false,
+                    error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+                };
+                return result;
+            }
+
+            if (offset == END) {
+                end = true;
             }
 
             if (!top?.pointer && stack.length) {
@@ -50,9 +63,14 @@ export namespace analyzer {
                 while (nullStackPointer) {
                     const head = stack.pop();
                     top = table.get(head!);
-                    nullStackPointer = !!top?.pointer;
+                    nullStackPointer = offset === END && top?.first.has(offset) ? false : !top?.pointer;
+                    if (offset && top?.first.has(offset) && top?.offset) {
+                        const it = seq.next();
+                        offset = it.value ?? null;
+                        end = !!it.done;
+                    }
                 }
-            } else if (!top?.pointer && !stack.length && !top?.end) {
+            } else if (top?.pointer == null && !stack.length && !top?.end && !end) {
                 const result: ExecResult = {
                     ok: false,
                     error: new exceptions.analyzer.EmptyStackException(),
@@ -61,8 +79,15 @@ export namespace analyzer {
             }
 
             pointer = top?.pointer ?? null;
-            if (pointer) {
+            if (pointer != null) {
                 top = table.get(pointer);
+                if (offset && !top?.first.has(offset) && top?.pointer == null) {
+                    const result: ExecResult = {
+                        ok: false,
+                        error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+                    };
+                    return result;
+                }
             }
         }
 

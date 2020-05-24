@@ -52,7 +52,7 @@ describe("generator", () => {
         });
 
         it("should return rule with set", () => {
-            set.exec(table, options);
+            set.exec(table, options, input);
 
             const expected: Set<LiteralOption> = new Set<LiteralOption>();
             expected.add({

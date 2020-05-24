@@ -31,14 +31,15 @@ export namespace generator {
         for (const pair of grammars) {
             const { literal: key, options: values } = pair;
 
-            let row: GrammarToken | null = null;
-            if (values.type === SymbolType.Terminal) {
-                row = new GrammarToken(index, key, values.set, values.type, tokens, values.last, values.end);
-            } else if (values.type === SymbolType.Nonterminal) {
-                row = new GrammarToken(index, key, values.set, values.type, tokens, values.last, values.end);
-            } else if (values.type === SymbolType.Empty) {
-                row = new GrammarToken(index, key, values.set, values.type, tokens, values.last, values.end);
-            }
+            const row: GrammarToken = new GrammarToken(
+                index,
+                key,
+                values.set,
+                values.type,
+                tokens,
+                values.last,
+                values.end,
+            );
 
             row?.visit(table);
             index++;
@@ -86,7 +87,7 @@ export namespace generator {
         visit(table: TokenTable): void {
             switch (this.type) {
                 case SymbolType.Nonterminal: {
-                    const left = this.findFirstTokenBy(this.rule); // FIXME: Все время undefined
+                    const left = this.findFirstTokenBy(this.rule);
                     if (left) {
                         const token = this.createNonterminalToken(left);
                         table.set(this.index, token);
