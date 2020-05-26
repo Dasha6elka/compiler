@@ -39,7 +39,7 @@ export namespace set {
         }
 
         for (const [key, values] of table) {
-            const onlyTerminals = Array.from(values).filter(value => terminals.has(value));
+            const onlyTerminals = Array.from(values).filter(value => terminals.has(value) || value === END);
             table.set(key, factory.createLiteralSet(onlyTerminals));
         }
     }

@@ -1,4 +1,13 @@
-import { LiteralSet, TokenTable, LiteralTable, LiteralOptions, RuleValue, GrammarValue, SymbolType } from "./common";
+import {
+    LiteralSet,
+    TokenTable,
+    LiteralTable,
+    LiteralOptions,
+    RuleValue,
+    GrammarValue,
+    SymbolType,
+    Literal,
+} from "./common";
 import { utils } from "./utils";
 import { EMPTY, END, ARR_EN } from "./constants";
 import { factory } from "./factory";
@@ -81,52 +90,115 @@ export namespace parser {
 
         const matches = new Map<string, Set<string[]>>();
         const matchesKey: string[] = [];
-        const matchesReversed = new Map<string, Set<string[]>>();
-        const matchesKeyReversed: string[] = [];
         const simples = new Set<string[]>();
         const simplesKey: string[] = [];
         const matchesList = new Set<string[]>();
 
         lines.forEach((line, index, array) => {
             const stack = utils.Input.stack(line);
-            const stackReversed = utils.Input.stack(line).reverse();
             const key = utils.Input.key(line);
 
             array.slice(index + 1).forEach(subLine => {
                 const subStack = utils.Input.stack(subLine);
-                const subStackReversed = utils.Input.stack(subLine).reverse();
 
-                fillMatches(subStack, stack, matches, matchesKey, key, matchesList, false);
-                fillMatches(
-                    subStackReversed,
-                    stackReversed,
-                    matchesReversed,
-                    matchesKeyReversed,
-                    key,
-                    matchesList,
-                    true,
-                );
+                fillMatches(subStack, stack, matches, matchesKey, key, matchesList);
             });
 
-            const isSimple = simple(matchesList, stack);
-
-            if (isSimple) {
+            if (simple(matchesList, stack)) {
                 simples.add(stack);
                 simplesKey.push(key);
             }
         });
 
         let result = "";
-        let i = 0;
-        let j = 0;
 
-        result = addInResultMatches(matches, matchesKey, false, result, i, j).result;
-        i = addInResultMatches(matches, matchesKey, false, result, i, j).i;
-        j = addInResultMatches(matches, matchesKey, false, result, i, j).j;
-
-        result = addInResultMatches(matchesReversed, matchesKeyReversed, true, result, i, j).result;
+        result = addInResultMatches(matches, matchesKey, result);
 
         result = addInResultSimples(simples, simplesKey, result);
+
+        return result;
+    }
+
+    export function leftRecursion(input: string): string {
+        const lines = utils.Input.normalize(input);
+        const tokensMap = new Map<Literal, Set<string[]>>();
+        const recursionKey: string[] = [];
+
+        lines.forEach(line => {
+            const key = utils.Input.key(line);
+            const stack = utils.Input.stack(line);
+
+            const values = tokensMap.get(key);
+            if (values) {
+                values?.add(stack); // TODO: unsafe cast
+                tokensMap.set(key, values!); // TODO: unsafe cast
+            } else {
+                tokensMap.set(key, new Set([stack]));
+            }
+
+            if (key === stack[0]) {
+                recursionKey.push(key);
+            }
+        });
+
+        if (!isLeftRecursiveness(input, tokensMap)) {
+            return "Grammar is not LL (1), parsing table cannot be built";
+        }
+
+        let alphabetIndex = 0,
+            letterIndex = 0;
+
+        const result = addInResult(tokensMap, recursionKey, alphabetIndex, letterIndex);
+
+        return result;
+    }
+
+    function isLeftRecursiveness(input: string, tokensMap: Map<Literal, Set<Literal[]>>): boolean {
+        let isLL = true;
+        for (const [key, values] of tokensMap) {
+            values.forEach(value => {
+                if (!isLL) {
+                    return;
+                }
+                let token = value[0];
+                if (key === token) {
+                    return;
+                }
+                isLL = isLeftRecursion(input, token, tokensMap, key);
+            });
+        }
+
+        return isLL;
+    }
+
+    function isLeftRecursion(
+        input: string,
+        token: Literal,
+        tokensMap: Map<Literal, Set<Literal[]>>,
+        key: Literal,
+    ): boolean {
+        const { nonTerminals } = terminize(input);
+        let result = true;
+
+        if (nonTerminals.includes(utils.NonTerminal.normalize(token))) {
+            let isLL = true;
+            while (isLL) {
+                const string = tokensMap.get(token)!; // TODO: unsafe cast
+                string.forEach(s => {
+                    if (!isLL) {
+                        return;
+                    }
+                    if (s[0] === key) {
+                        isLL = false;
+                        result = false;
+                    } else {
+                        token = s[0];
+                        isLeftRecursion(input, token, tokensMap, key);
+                        isLL = false;
+                    }
+                });
+            }
+        }
 
         return result;
     }
@@ -139,8 +211,6 @@ export namespace parser {
             const stack = (line.match(STACK_REG_EXP) ?? []).map(utils.NonTerminal.normalize);
             const rule = stack[0];
             stack.shift();
-            const index = stack.findIndex(value => value === EMPTY);
-            stack[index] = END;
             options.add({
                 rule,
                 grammar: factory.createLiteralSet(stack),
@@ -151,7 +221,7 @@ export namespace parser {
         return options;
     }
 
-    export function rules(input: string, options: LiteralOptions): RuleValue[] {
+    export function rules(options: LiteralOptions): RuleValue[] {
         return Array.from(options.values()).map((option, index, array) => {
             const next = array[index + 1];
             const set = option.first;
@@ -172,10 +242,10 @@ export namespace parser {
         const isEmpty = (v: string): boolean => v === EMPTY;
         const isEnd = (v: string): boolean => v === END;
 
-        let anEnd: boolean = false;
+        let isEndToken: boolean = false;
         lines.every(line => {
             if (line.search(END)) {
-                anEnd = true;
+                isEndToken = true;
             }
         });
 
@@ -202,7 +272,7 @@ export namespace parser {
                         ? factory.createLiteralSet([literal])
                         : table.get(literal)!; // TODO: unsafe cast
 
-                const end = (isLastLine && !next && !anEnd) || isEnd(literal);
+                const end = (isLastLine && !next && !isEndToken) || isEnd(literal);
 
                 const last = next && (isTerminal(literal) || isNonTerminal(literal)) ? false : true;
 
@@ -297,60 +367,42 @@ export namespace parser {
         }
     }
 
-    function arrayPush(array: string[], source: Set<string[]>) {
-        if (array.length) {
-            source.add(array);
-        } else {
-            source.add([EMPTY]);
-        }
-    }
-
     function fillMatches(
-        subStack: string[],
-        stack: string[],
-        matches: Map<string, Set<string[]>>,
-        matchesKey: string[],
-        key: string,
-        matchesList: Set<string[]>,
-        isReverse: boolean,
+        subStack: Literal[],
+        stack: Literal[],
+        matches: Map<Literal, Set<Literal[]>>,
+        matchesKey: Literal[],
+        key: Literal,
+        matchesList: Set<Literal[]>,
     ): void {
-        let same = "";
-        let other: Set<string[]> = new Set<string[]>();
+        let match = "";
+        let otherPart: Set<Literal[]> = new Set<Literal[]>();
         if (stack[0] === subStack[0]) {
-            same += `${stack[0]} `;
+            match += `${stack[0]} `;
             let i = 1;
             while (stack[i] === subStack[i]) {
-                same += `${stack[i]} `;
+                match += `${stack[i]} `;
                 i++;
             }
             const stackSlice = stack.slice(i);
             const subStackSlice = subStack.slice(i);
-            arrayPush(stackSlice, other);
-            arrayPush(subStackSlice, other);
+            arrayPush(stackSlice, otherPart);
+            arrayPush(subStackSlice, otherPart);
 
-            if (isReverse) {
-                same = same.split(" ").reverse().join(" ");
-            }
-
-            if (matches.has(same)) {
-                let match = matches.get(same)!;
-                match.forEach(m => {
-                    other.forEach(o => {
-                        if (utils.compare(o, m)) {
-                            other.delete(o);
+            if (matches.has(match)) {
+                let matchValues = matches.get(match)!;
+                matchValues.forEach(value => {
+                    otherPart.forEach(other => {
+                        if (utils.compare(other, value)) {
+                            otherPart.delete(other);
                         }
                     });
                 });
-                other.forEach(o => match.add(o));
-                matches.set(same, match);
+                otherPart.forEach(other => matchValues.add(other));
+                matches.set(match, matchValues);
             } else {
-                matches.set(same, other);
+                matches.set(match, otherPart);
                 matchesKey.push(key);
-            }
-
-            if (isReverse) {
-                stack.reverse();
-                subStack.reverse();
             }
 
             matchesList.add(stack);
@@ -358,54 +410,80 @@ export namespace parser {
         }
     }
 
-    function addInResultMatches(
-        matches: Map<string, Set<string[]>>,
-        matchesKey: string[],
-        isReverse: boolean,
-        result: string,
-        i: number,
-        j: number,
-    ): { result: string; i: number; j: number } {
+    function addInResultMatches(matches: Map<Literal, Set<Literal[]>>, matchesKey: Literal[], result: string): string {
         const keys = matches.keys();
-        let k = 0;
-        matches.forEach(match => {
-            let string = isReverse
-                ? `${matchesKey[k]}-><${ARR_EN[i]}${j}>${keys.next().value}\n`
-                : `${matchesKey[k]}->${keys.next().value}<${ARR_EN[i]}${j}>\n`;
-            result += string;
+        let alphabetIndex = 0,
+            letterIndex = 0,
+            matchIndex = 0;
 
-            match.forEach(m => {
-                string = `<${ARR_EN[i]}${j}>->${m.join(" ")}`.trim();
-                result += string + "\n";
-            });
+        matches.forEach(matchValues => {
+            const letter = `${ARR_EN[alphabetIndex]}${letterIndex}`;
+            result += `${matchesKey[matchIndex]}->${keys.next().value}<${letter}>\n`;
 
-            i++;
-            k++;
-            if (ARR_EN.length - 1 === j) {
-                j++;
+            matchValues.forEach(match => (result += `<${letter}>->${match.join(" ").trim()}` + "\n"));
+
+            alphabetIndex++, matchIndex++;
+            if (ARR_EN.length - 1 === letterIndex) {
+                letterIndex++;
             }
-        });
-
-        return { result, i, j };
-    }
-
-    function addInResultSimples(simples: Set<string[]>, simplesKey: string[], result: string): string {
-        let k = 0;
-        simples.forEach(simple => {
-            let str = "";
-            simple.forEach(s => {
-                str += `${s} `;
-            });
-            let string = `${simplesKey[k]}->${str}`.trim();
-            result += string + "\n";
-
-            k++;
         });
 
         return result;
     }
 
-    function simple(matchesList: Set<string[]>, stack: string[]): boolean {
+    function addInResult(
+        tokensMap: Map<Literal, Set<Literal[]>>,
+        recursionKey: string[],
+        alphabetIndex: number,
+        letterIndex: number,
+    ): string {
+        let result = "";
+        for (const [key, values] of tokensMap) {
+            if (recursionKey.includes(key)) {
+                let recursion = "",
+                    simples = "";
+
+                const letter = `${ARR_EN[alphabetIndex]}${letterIndex}`;
+                values.forEach(value => {
+                    if (key === value[0]) {
+                        recursion += `<${letter}>->${value.slice(1).join(" ").trim()}<${letter}>` + "\n";
+                    } else {
+                        simples += `${key}->${value.join(" ").trim()}<${letter}>` + "\n";
+                    }
+                });
+
+                recursion += `<${letter}>->e` + "\n";
+                result += simples + recursion;
+
+                alphabetIndex++;
+                if (ARR_EN.length - 1 === letterIndex) {
+                    letterIndex++;
+                }
+            } else {
+                values.forEach(value => (result += `${key}->${value.join(" ")}`.trim() + "\n"));
+            }
+        }
+        return result;
+    }
+
+    function addInResultSimples(simples: Set<Literal[]>, simplesKey: Literal[], result: string): string {
+        let simpleIndex = 0;
+        simples.forEach(simple => {
+            let str = "";
+            simple.forEach(s => (str += `${s} `));
+            result += `${simplesKey[simpleIndex]}->${str.trim()}` + "\n";
+
+            simpleIndex++;
+        });
+
+        return result;
+    }
+
+    function arrayPush(array: Literal[], source: Set<Literal[]>) {
+        source.add(array.length ? array : [EMPTY]);
+    }
+
+    function simple(matchesList: Set<Literal[]>, stack: Literal[]): boolean {
         let isSimple = true;
         matchesList.forEach(match => {
             if (utils.compare(match, stack)) {

@@ -104,13 +104,11 @@ describe("parser", () => {
 `;
 
         const actual = parser.factorization(input);
-        const expected = `<A>-><A0> <B> <C>
-<A0>->e
-<A0>-><D>
-<A>-><B0> a x
-<B0>-><F>
-<B0>->y
-<B0>->z
+        const expected = `<A>-><B> <C>
+<A>-><D> <B> <C>
+<A>-><F> a x
+<A>->y a x
+<A>->z a x
 `;
 
         expect(actual).toEqual(expected);
@@ -130,9 +128,8 @@ describe("parser", () => {
 <A0>-><F>
 <A0>->y
 <A0>->z
-<A>-><B0> <B> <C>
-<B0>->e
-<B0>-><D>
+<A>-><B> <C>
+<A>-><D> <B> <C>
 `;
 
         expect(actual).toEqual(expected);
@@ -175,6 +172,73 @@ describe("parser", () => {
 <A0>->z
 <F>->m
 `;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("left resursion simple", () => {
+        const input = `
+<A>-><A> + 5
+<A>->5
+`;
+
+        const actual = parser.leftRecursion(input);
+        const expected = `<A>->5<A0>
+<A0>->+ 5<A0>
+<A0>->e
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("left resursion not space", () => {
+        const input = `
+<A>-><A>x<F>
+<A>->y
+<F>->m
+`;
+
+        const actual = parser.leftRecursion(input);
+        const expected = `<A>->y<A0>
+<A0>->x <F><A0>
+<A0>->e
+<F>->m
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("left resursion hard", () => {
+        const input = `
+<S>-><S>+<A>
+<S>-><S>*<A>
+<S>->5
+<A>->(<A>)
+<A>->i
+`;
+
+        const actual = parser.leftRecursion(input);
+        const expected = `<S>->5<A0>
+<A0>->+ <A><A0>
+<A0>->* <A><A0>
+<A0>->e
+<A>->( <A> )
+<A>->i
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("not LL(1)", () => {
+        const input = `
+<S>-><A><S>
+<S>->b
+<A>-><S><A>
+<A>->a
+`;
+
+        const actual = parser.leftRecursion(input);
+        const expected = "Grammar is not LL (1), parsing table cannot be built";
 
         expect(actual).toEqual(expected);
     });
