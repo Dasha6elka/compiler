@@ -1,0 +1,35 @@
+class Foo {
+    private double big = 3.2e+23; // Some sort of big value
+    private double small = -4.70e-9; // Some sort of small value
+
+    private String message = "Foo >> ";
+
+    private int hex = 0x0A0B0C;
+    private int octal = 0737;
+    private int binary = 0b01001001110;
+
+    /**
+     * Starts the program
+     */
+    public void main(String[] args) {
+        int size = 3;
+        int [size] array = { 1, 2, 3 };
+        while (index != 0) {
+            index = index - 1;
+            var coefficient = big * small / hex;
+        }
+        for (var num : array) {
+            var coefficient = big * small / hex;
+        }
+        var secret = hex ^ octal ^ binary;
+        println(secret);
+		int A = 5;
+		int B = 6;
+		int S = 7;
+		int i = 0;
+
+        String string = " Земля конечно плоская
+                      причём ужасно жёсткая
+                      !!!!!!!";
+    }
+}

@@ -228,6 +228,28 @@ describe("parser", () => {
 
         expect(actual).toEqual(expected);
     });
+    describe("left resursion hardest", () => {
+        const input = `
+<Z>-><S>⊥
+<S>-><S>+<A>
+<S>-><S>*<A>
+<S>->5
+<A>->(<A>)
+<A>->i
+`;
+
+        const actual = parser.leftRecursion(input);
+        const expected = `<Z>-><S> ⊥
+<S>->5<A0>
+<A0>->+ <A><A0>
+<A0>->* <A><A0>
+<A0>->e
+<A>->( <A> )
+<A>->i
+`;
+
+        expect(actual).toEqual(expected);
+    });
 
     describe("not LL(1)", () => {
         const input = `

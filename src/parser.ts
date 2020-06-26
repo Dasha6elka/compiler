@@ -191,6 +191,9 @@ export namespace parser {
                     if (s[0] === key) {
                         isLL = false;
                         result = false;
+                    } else if (token !== key) {
+                        isLL = false;
+                        result = true;
                     } else {
                         token = s[0];
                         isLeftRecursion(input, token, tokensMap, key);

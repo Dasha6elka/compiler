@@ -1,6 +1,7 @@
 import { TokenTable, Pointer, Stack, Literal, LiteralToken } from "./common";
 import { exceptions } from "./exceptions";
 import { EMPTY, END } from "./constants";
+import { lexer } from "../../Lexer/src";
 
 export namespace analyzer {
     type ExecError = exceptions.analyzer.EmptyStackException | exceptions.analyzer.IncorrectSequenceOrderException;
@@ -18,6 +19,15 @@ export namespace analyzer {
 
         let end = false;
         let offset: Literal | null = seq.next().value ?? null;
+
+        let tokensLexer: string[] = [];
+        tokensLexer = lexer.main("./lexer.txt", "./tokens.txt", tokensLexer);
+        let tokensArray: string[] = [];
+
+        tokensLexer.forEach(token => {
+            const array = token.split(" ");
+            tokensArray.push(array[1]);
+        });
 
         while (!(end && !stack.length && top?.end)) {
             if (!top?.error && ((offset && !top?.first.has(offset)) || offset == null)) {
@@ -44,6 +54,13 @@ export namespace analyzer {
 
             if (offset && top?.first.has(offset) && top?.offset) {
                 const it = seq.next();
+                if (!tokensArray.includes(it.value) && it.value != END) {
+                    const result: ExecResult = {
+                        ok: false,
+                        error: new exceptions.analyzer.IncorrectTokens(),
+                    };
+                    return result;
+                }
                 offset = it.value ?? null;
                 end = !!it.done;
             } else if (offset && !top?.first.has(offset) && top?.offset) {
