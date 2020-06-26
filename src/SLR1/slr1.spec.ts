@@ -1,7 +1,5 @@
-import { Literal } from "./common";
-import { factory } from "./factory";
-import { END } from "./constants";
-import { Grammar } from "./slrcommon";
+import { Literal, Grammar } from "../common/common";
+import { END } from "../common/constants";
 import { slr1 } from "./slr1";
 
 describe("slr1", () => {

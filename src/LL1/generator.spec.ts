@@ -1,8 +1,8 @@
 import { generator } from "./generator";
-import { TokenTable, SymbolType, RuleValue, GrammarValue } from "./common";
-import { END } from "./constants";
+import { TokenTable, SymbolType, RuleValue, GrammarValue } from "../common/common";
+import { END } from "../common/constants";
 import { parser } from "./parser";
-import { factory } from "./factory";
+import { factory } from "../common/factory";
 
 describe("generator", () => {
     describe("<S>->if/if", () => {

@@ -1,7 +1,7 @@
-import { TokenTable, Pointer, Stack, Literal, LiteralToken } from "./common";
+import { TokenTable, Pointer, Stack, Literal, LiteralToken } from "../common/common";
 import { exceptions } from "./exceptions";
-import { EMPTY, END } from "./constants";
-import { lexer } from "../../Lexer/src";
+import { EMPTY, END } from "../common/constants";
+import { lexer } from "../../../Lexer/src";
 
 export namespace analyzer {
     type ExecError = exceptions.analyzer.EmptyStackException | exceptions.analyzer.IncorrectSequenceOrderException;

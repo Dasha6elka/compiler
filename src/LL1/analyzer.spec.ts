@@ -1,8 +1,8 @@
 import { analyzer } from "./analyzer";
-import { LiteralToken, LiteralIterator } from "./common";
-import { END } from "./constants";
+import { LiteralToken, LiteralIterator } from "../common/common";
+import { END } from "../common/constants";
 import { exceptions } from "./exceptions";
-import { factory } from "./factory";
+import { factory } from "../common/factory";
 
 describe("analyzer", () => {
     describe("symbols [A, B, 5, +, e]", () => {

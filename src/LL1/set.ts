@@ -1,7 +1,7 @@
-import { LiteralOptions, LiteralTable } from "./common";
-import { EMPTY, END } from "./constants";
+import { LiteralOptions, LiteralTable } from "../common/common";
+import { EMPTY, END } from "../common/constants";
 import { parser } from "./parser";
-import { factory } from "./factory";
+import { factory } from "../common/factory";
 
 export namespace set {
     export function exec(table: LiteralTable, options: LiteralOptions, input: string): void {

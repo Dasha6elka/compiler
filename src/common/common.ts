@@ -10,6 +10,12 @@ export interface LiteralOption {
     grammar: LiteralSet;
 }
 
+export interface Grammar {
+    non_terminal: Literal;
+    right_part: Literal[];
+    elements: Literal[];
+}
+
 export type LiteralOptions = Set<LiteralOption>;
 
 export interface LiteralToken {

@@ -1,16 +1,19 @@
 {
-  "name": "LL1",
+  "name": "Compiler",
   "version": "1.0.0",
-  "description": "Simple LL(1) parser written in TypeScript",
+  "description": "Simple Compiler written in TypeScript",
   "scripts": {
-    "start": "ts-node src/index.ts",
+    "start": "ts-node src/LL1/index.ts",
     "test": "yarn jest",
     "coverage": "yarn jest --coverage",
     "docs": "typedoc --mode library --exclude \"**/*+(index|.spec).ts\" --out docs src && cp .nojekyll docs",
     "pretty": "prettier --write src"
   },
   "dependencies": {
+    "@types/line-reader": "^0.0.30",
     "@types/node": "^14.0.1",
+    "fs": "^0.0.1-security",
+    "line-reader": "^0.4.0",
     "ts-node": "^8.10.1",
     "typescript": "^3.9.2"
   },

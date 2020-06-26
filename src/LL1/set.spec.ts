@@ -1,8 +1,8 @@
-import { Literal, LiteralOption } from "./common";
+import { Literal, LiteralOption } from "../common/common";
 import { set } from "./set";
 import { parser } from "./parser";
-import { factory } from "./factory";
-import { END } from "./constants";
+import { factory } from "../common/factory";
+import { END } from "../common/constants";
 
 describe("generator", () => {
     describe("<S>->a<A>  <S>->b  <A>->c<A><S>  <A>->e", () => {

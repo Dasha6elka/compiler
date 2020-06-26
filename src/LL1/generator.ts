@@ -7,10 +7,10 @@ import {
     LiteralSet,
     RuleValue,
     GrammarValue,
-} from "./common";
-import { END } from "./constants";
+} from "../common/common";
+import { END } from "../common/constants";
 import { exceptions } from "./exceptions";
-import { factory } from "./factory";
+import { factory } from "../common/factory";
 
 export namespace generator {
     export function exec(rules: RuleValue[], grammars: GrammarValue[]): TokenTable {

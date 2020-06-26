@@ -7,10 +7,10 @@ import {
     GrammarValue,
     SymbolType,
     Literal,
-} from "./common";
-import { utils } from "./utils";
-import { EMPTY, END, ARR_EN } from "./constants";
-import { factory } from "./factory";
+} from "../common/common";
+import { utils } from "../common/utils";
+import { EMPTY, END, ARR_EN } from "../common/constants";
+import { factory } from "../common/factory";
 
 export namespace parser {
     interface TokenizeResult {

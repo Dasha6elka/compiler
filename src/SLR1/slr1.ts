@@ -1,6 +1,5 @@
-import { Grammar } from "./slrcommon";
-import { Literal } from "./common";
-import { END } from "./constants";
+import { END } from "../common/constants";
+import { Grammar, Literal } from "../common/common";
 
 const States = {
     OK: "OK",

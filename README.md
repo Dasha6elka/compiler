@@ -1,1 +1,1 @@
-# Simple LL(1) parser written in TypeScript
+# Simple Compiler written in TypeScript
