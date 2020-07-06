@@ -9,6 +9,7 @@ export namespace set {
 
         options.forEach(option => {
             const literals = table.get(option.rule);
+
             let firstGrammarLiteral = Array.from(option.grammar.values())[0];
             if (literals?.has(firstGrammarLiteral)) {
                 if (nonTerminals.has(firstGrammarLiteral)) {

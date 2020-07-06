@@ -9,15 +9,18 @@ describe("analyzer", () => {
         const LITERALS = {
             A: "A",
             B: "B",
+            INT_NUMBER: "INT_NUMBER",
             FIVE: "5",
+            S_PLUS: "PLUS",
             PLUS: "+",
             e: "e",
+            S_END: "END",
         };
 
         const data: LiteralToken[] = [
             {
                 rule: LITERALS.A,
-                first: factory.createLiteralSet([LITERALS.FIVE]),
+                first: factory.createLiteralSet([LITERALS.INT_NUMBER]),
                 offset: false,
                 error: true,
                 pointer: 3,
@@ -26,7 +29,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([LITERALS.PLUS]),
+                first: factory.createLiteralSet([LITERALS.S_PLUS]),
                 offset: false,
                 error: false,
                 pointer: 5,
@@ -35,7 +38,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([END]),
+                first: factory.createLiteralSet([LITERALS.S_END]),
                 offset: false,
                 error: true,
                 pointer: 8,
@@ -43,8 +46,8 @@ describe("analyzer", () => {
                 end: false,
             },
             {
-                rule: LITERALS.FIVE,
-                first: factory.createLiteralSet([LITERALS.FIVE]),
+                rule: LITERALS.INT_NUMBER,
+                first: factory.createLiteralSet([LITERALS.INT_NUMBER]),
                 offset: true,
                 error: true,
                 pointer: 4,
@@ -53,7 +56,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([END, LITERALS.PLUS]),
+                first: factory.createLiteralSet([LITERALS.S_END, LITERALS.S_PLUS]),
                 offset: false,
                 error: true,
                 pointer: 1,
@@ -61,8 +64,8 @@ describe("analyzer", () => {
                 end: false,
             },
             {
-                rule: LITERALS.PLUS,
-                first: factory.createLiteralSet([LITERALS.PLUS]),
+                rule: LITERALS.S_PLUS,
+                first: factory.createLiteralSet([LITERALS.S_PLUS]),
                 offset: true,
                 error: true,
                 pointer: 6,
@@ -70,8 +73,8 @@ describe("analyzer", () => {
                 end: false,
             },
             {
-                rule: LITERALS.FIVE,
-                first: factory.createLiteralSet([LITERALS.FIVE]),
+                rule: LITERALS.INT_NUMBER,
+                first: factory.createLiteralSet([LITERALS.INT_NUMBER]),
                 offset: true,
                 error: true,
                 pointer: 7,
@@ -80,7 +83,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([END, LITERALS.PLUS]),
+                first: factory.createLiteralSet([LITERALS.S_END, LITERALS.S_PLUS]),
                 offset: false,
                 error: true,
                 pointer: 1,
@@ -89,7 +92,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.e,
-                first: factory.createLiteralSet([END]),
+                first: factory.createLiteralSet([LITERALS.S_END]),
                 offset: true,
                 error: true,
                 pointer: null,
@@ -102,7 +105,7 @@ describe("analyzer", () => {
 
         it("should pass on 5+5", () => {
             const input = [LITERALS.FIVE, LITERALS.PLUS, LITERALS.FIVE, END];
-            const result = analyzer.exec(table, new LiteralIterator(input));
+            const result = analyzer.exec(table, input);
             expect(result).toMatchObject({
                 ok: true,
                 error: null,
@@ -111,7 +114,7 @@ describe("analyzer", () => {
 
         it("should fail on 5+5++", () => {
             const input = [LITERALS.FIVE, LITERALS.PLUS, LITERALS.FIVE, LITERALS.PLUS, LITERALS.PLUS, END];
-            const result = analyzer.exec(table, new LiteralIterator(input));
+            const result = analyzer.exec(table, input);
             expect(result).toMatchObject({
                 ok: false,
                 error: new exceptions.analyzer.IncorrectSequenceOrderException(),
@@ -125,18 +128,25 @@ describe("analyzer", () => {
             B: "B",
             A: "A",
             FIVE: "5",
+            INT_NUMBER: "INT_NUMBER",
             PLUS: "+",
+            S_PLUS: "PLUS",
             MUL: "*",
+            MULTIPLICATION: "MULTIPLICATION",
             OB: "(",
+            BRACKET_OPEN: "BRACKET_OPEN",
             CB: ")",
+            BRACKET_CLOSE: "BRACKET_CLOSE",
             i: "i",
+            IDENTIFICATION: "IDENTIFICATION",
             e: "e",
+            END: "END",
         };
 
         const data: LiteralToken[] = [
             {
                 rule: LITERALS.S,
-                first: factory.createLiteralSet([LITERALS.FIVE]),
+                first: factory.createLiteralSet([LITERALS.INT_NUMBER]),
                 offset: false,
                 error: true,
                 pointer: 6,
@@ -145,7 +155,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([LITERALS.PLUS]),
+                first: factory.createLiteralSet([LITERALS.S_PLUS]),
                 offset: false,
                 error: false,
                 pointer: 9,
@@ -154,7 +164,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([LITERALS.MUL]),
+                first: factory.createLiteralSet([LITERALS.MULTIPLICATION]),
                 offset: false,
                 error: false,
                 pointer: 12,
@@ -163,7 +173,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([END]),
+                first: factory.createLiteralSet([LITERALS.END]),
                 offset: false,
                 error: true,
                 pointer: 19,
@@ -172,7 +182,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.A,
-                first: factory.createLiteralSet([LITERALS.OB]),
+                first: factory.createLiteralSet([LITERALS.BRACKET_OPEN]),
                 offset: false,
                 error: false,
                 pointer: 15,
@@ -181,7 +191,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.A,
-                first: factory.createLiteralSet([LITERALS.i]),
+                first: factory.createLiteralSet([LITERALS.IDENTIFICATION]),
                 offset: false,
                 error: true,
                 pointer: 18,
@@ -189,8 +199,8 @@ describe("analyzer", () => {
                 end: false,
             },
             {
-                rule: LITERALS.FIVE,
-                first: factory.createLiteralSet([LITERALS.FIVE]),
+                rule: LITERALS.INT_NUMBER,
+                first: factory.createLiteralSet([LITERALS.INT_NUMBER]),
                 offset: true,
                 error: true,
                 pointer: 7,
@@ -199,7 +209,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([LITERALS.PLUS, LITERALS.MUL, END]),
+                first: factory.createLiteralSet([LITERALS.S_PLUS, LITERALS.MULTIPLICATION, LITERALS.END]),
                 offset: false,
                 error: true,
                 pointer: 1,
@@ -208,7 +218,7 @@ describe("analyzer", () => {
             },
             {
                 rule: END,
-                first: factory.createLiteralSet([END]),
+                first: factory.createLiteralSet([LITERALS.END]),
                 offset: false,
                 error: true,
                 pointer: null,
@@ -216,8 +226,8 @@ describe("analyzer", () => {
                 end: true,
             },
             {
-                rule: LITERALS.PLUS,
-                first: factory.createLiteralSet([LITERALS.PLUS]),
+                rule: LITERALS.S_PLUS,
+                first: factory.createLiteralSet([LITERALS.S_PLUS]),
                 offset: true,
                 error: true,
                 pointer: 10,
@@ -226,7 +236,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.A,
-                first: factory.createLiteralSet([LITERALS.OB, LITERALS.i]),
+                first: factory.createLiteralSet([LITERALS.BRACKET_OPEN, LITERALS.IDENTIFICATION]),
                 offset: false,
                 error: true,
                 pointer: 4,
@@ -235,7 +245,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([LITERALS.PLUS, LITERALS.MUL, END]),
+                first: factory.createLiteralSet([LITERALS.S_PLUS, LITERALS.MULTIPLICATION, LITERALS.END]),
                 offset: false,
                 error: true,
                 pointer: 1,
@@ -243,8 +253,8 @@ describe("analyzer", () => {
                 end: false,
             },
             {
-                rule: LITERALS.MUL,
-                first: factory.createLiteralSet([LITERALS.MUL]),
+                rule: LITERALS.MULTIPLICATION,
+                first: factory.createLiteralSet([LITERALS.MULTIPLICATION]),
                 offset: true,
                 error: true,
                 pointer: 13,
@@ -253,7 +263,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.A,
-                first: factory.createLiteralSet([LITERALS.OB, LITERALS.i]),
+                first: factory.createLiteralSet([LITERALS.BRACKET_OPEN, LITERALS.IDENTIFICATION]),
                 offset: false,
                 error: true,
                 pointer: 4,
@@ -262,7 +272,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.B,
-                first: factory.createLiteralSet([LITERALS.PLUS, LITERALS.MUL, END]),
+                first: factory.createLiteralSet([LITERALS.S_PLUS, LITERALS.MULTIPLICATION, LITERALS.END]),
                 offset: false,
                 error: true,
                 pointer: 1,
@@ -270,8 +280,8 @@ describe("analyzer", () => {
                 end: false,
             },
             {
-                rule: LITERALS.OB,
-                first: factory.createLiteralSet([LITERALS.OB]),
+                rule: LITERALS.BRACKET_OPEN,
+                first: factory.createLiteralSet([LITERALS.BRACKET_OPEN]),
                 offset: true,
                 error: true,
                 pointer: 16,
@@ -280,7 +290,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.A,
-                first: factory.createLiteralSet([LITERALS.OB, LITERALS.i]),
+                first: factory.createLiteralSet([LITERALS.BRACKET_OPEN, LITERALS.IDENTIFICATION]),
                 offset: false,
                 error: true,
                 pointer: 4,
@@ -288,8 +298,8 @@ describe("analyzer", () => {
                 end: false,
             },
             {
-                rule: LITERALS.CB,
-                first: factory.createLiteralSet([LITERALS.CB]),
+                rule: LITERALS.BRACKET_CLOSE,
+                first: factory.createLiteralSet([LITERALS.BRACKET_CLOSE]),
                 offset: true,
                 error: true,
                 pointer: null,
@@ -297,8 +307,8 @@ describe("analyzer", () => {
                 end: false,
             },
             {
-                rule: LITERALS.i,
-                first: factory.createLiteralSet([LITERALS.i]),
+                rule: LITERALS.IDENTIFICATION,
+                first: factory.createLiteralSet([LITERALS.IDENTIFICATION]),
                 offset: true,
                 error: true,
                 pointer: null,
@@ -307,7 +317,7 @@ describe("analyzer", () => {
             },
             {
                 rule: LITERALS.e,
-                first: factory.createLiteralSet([END]),
+                first: factory.createLiteralSet([LITERALS.END]),
                 offset: false,
                 error: true,
                 pointer: null,
@@ -320,7 +330,7 @@ describe("analyzer", () => {
 
         it("should pass on 5+(i)", () => {
             const input = [LITERALS.FIVE, LITERALS.PLUS, LITERALS.OB, LITERALS.i, LITERALS.CB, END];
-            const result = analyzer.exec(table, new LiteralIterator(input));
+            const result = analyzer.exec(table, input);
             expect(result).toMatchObject({
                 ok: true,
                 error: null,
@@ -340,7 +350,7 @@ describe("analyzer", () => {
                 LITERALS.i,
                 END,
             ];
-            const result = analyzer.exec(table, new LiteralIterator(input));
+            const result = analyzer.exec(table, input);
             expect(result).toMatchObject({
                 ok: true,
                 error: null,
@@ -359,7 +369,7 @@ describe("analyzer", () => {
                 LITERALS.PLUS,
                 END,
             ];
-            const result = analyzer.exec(table, new LiteralIterator(input));
+            const result = analyzer.exec(table, input);
             expect(result).toMatchObject({
                 ok: false,
                 error: new exceptions.analyzer.IncorrectSequenceOrderException(),

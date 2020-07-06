@@ -25,7 +25,7 @@ export namespace parser {
 
     type Transitions = Map<string, string[]>;
 
-    const STACK_REG_EXP = new RegExp("<(?:(?!<|>).)+>|([^-<> ]+)", "gi");
+    const STACK_REG_EXP = new RegExp("<(?:(?!<|>).)+>|(?!->)([^<> ]+)", "gi");
     const RIGHT_PART_REG_EXP = new RegExp("(?<=->).*", "gim");
     const NON_TERMINALS_REG_EXP = new RegExp("<.+>(?=->)", "gim");
 
@@ -35,9 +35,14 @@ export namespace parser {
 
         const rightPartMatch = input.match(RIGHT_PART_REG_EXP) ?? [];
         const nonTerminalsToExclude = new RegExp(nonTerminalsMatch.join("|"), "gim");
-        const terminals = rightPartMatch
-            .map(grammar => grammar.replace(nonTerminalsToExclude, ""))
-            .reduce(utils.flatten, [] as string[]);
+        const terminals: string[] = [];
+        rightPartMatch.forEach(grammar => {
+            const term: string = grammar.replace(nonTerminalsToExclude, " ").trim();
+            if (term === "") {
+                return;
+            }
+            terminals.push(...term.split(" "));
+        });
 
         return {
             terminals: utils.uniq(terminals),
@@ -298,6 +303,7 @@ export namespace parser {
 
     export function parse(input: string): LiteralTable {
         const transitionsMap = transitionize(input);
+        const { nonTerminals } = terminize(input);
 
         const cache = factory.createLiteralTable();
         const cacheSafePush = utils.useSafePush(cache, value => factory.createLiteralSet([value]));
@@ -330,8 +336,9 @@ export namespace parser {
                     tableSafePush(nonTerminalMatch, new Set([END]));
                 }
             } else {
-                cacheSafePush(nonTerminalMatch, rightPartMatch[0]);
-                tableSafePush(nonTerminalMatch, rightPartMatch[0]);
+                const symbol: string = rightPartMatch.split(" ")[0];
+                cacheSafePush(nonTerminalMatch, symbol);
+                tableSafePush(nonTerminalMatch, symbol);
             }
         });
 
@@ -380,10 +387,13 @@ export namespace parser {
     ): void {
         let match = "";
         let otherPart: Set<Literal[]> = new Set<Literal[]>();
-        if (stack[0] === subStack[0]) {
+        if (stack[0] === subStack[0] && stack[0] != EMPTY) {
             match += `${stack[0]} `;
             let i = 1;
             while (stack[i] === subStack[i]) {
+                if (stack[i] === "undefined" || subStack[i] === "undefined") {
+                    return;
+                }
                 match += `${stack[i]} `;
                 i++;
             }

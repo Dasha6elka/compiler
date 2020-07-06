@@ -50,4 +50,5 @@ export enum TokenType {
     BINARY = "BINARY",
     OCTAL = "OCTAL",
     HEX = "HEX",
+    END = "END",
 }

@@ -1,0 +1,11 @@
+class Foo {
+    private double small = -4.70e-9; // Some sort of small value
+
+    private String message = "Foo >> ";
+
+    private int hex = 0x0A0B0C;
+
+    /**
+     * Starts the program
+     */
+}

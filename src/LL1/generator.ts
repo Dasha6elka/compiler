@@ -8,12 +8,11 @@ import {
     RuleValue,
     GrammarValue,
 } from "../common/common";
-import { END } from "../common/constants";
 import { exceptions } from "./exceptions";
 import { factory } from "../common/factory";
 
 export namespace generator {
-    export function exec(rules: RuleValue[], grammars: GrammarValue[]): TokenTable {
+    export function exec(rules: RuleValue[], grammars: GrammarValue[], tokensLexer: string[]): TokenTable {
         const table = factory.createTokenTable();
 
         const tokens: RuleToken[] = [];
@@ -24,7 +23,7 @@ export namespace generator {
             const { literal: key, set: values } = pair;
             const row = new RuleToken(index, key, values!, pair.last);
             tokens.push(row);
-            row.visit(table);
+            row.visit(table, tokensLexer);
             index++;
         }
 
@@ -41,7 +40,7 @@ export namespace generator {
                 values.end,
             );
 
-            row?.visit(table);
+            row?.visit(table, tokensLexer);
             index++;
         }
 
@@ -59,10 +58,25 @@ export namespace generator {
             return this._rule;
         }
 
-        visit(table: TokenTable): void {
+        visit(table: TokenTable, tokensLexer: string[]): void {
+            let rule = "";
+            let first: Set<Literal> = new Set<Literal>();
+
+            tokensLexer.forEach(token => {
+                const array = token.split(" ");
+                if (this.first.has(array[1])) {
+                    rule = array[0];
+                    first.add(rule);
+                }
+            });
+
+            if (first.size === 0) {
+                first = this.first;
+            }
+
             const token: LiteralToken = {
                 rule: this._rule,
-                first: this.first,
+                first,
                 pointer: null,
                 offset: false,
                 error: this.last ? true : false,
@@ -84,12 +98,12 @@ export namespace generator {
             private end: boolean = false,
         ) {}
 
-        visit(table: TokenTable): void {
+        visit(table: TokenTable, tokensLexer: string[]): void {
             switch (this.type) {
                 case SymbolType.Nonterminal: {
                     const left = this.findFirstTokenBy(this.rule);
                     if (left) {
-                        const token = this.createNonterminalToken(left);
+                        const token = this.createNonterminalToken(left, tokensLexer);
                         table.set(this.index, token);
                     } else {
                         throw new exceptions.generator.LeftTokenNotFound();
@@ -98,7 +112,7 @@ export namespace generator {
                 }
 
                 case SymbolType.Terminal: {
-                    const token = this.createTerminalToken();
+                    const token = this.createTerminalToken(tokensLexer);
                     table.set(this.index, token);
                     break;
                 }
@@ -115,10 +129,21 @@ export namespace generator {
             return this.rules.find(rule => rule.rule === literal);
         }
 
-        private createNonterminalToken(left: RuleToken): LiteralToken {
+        private createNonterminalToken(left: RuleToken, tokensLexer: string[]): LiteralToken {
+            let rule = "";
+            const first: Set<Literal> = new Set<Literal>();
+
+            tokensLexer.forEach(token => {
+                const array = token.split(" ");
+                if (this.first.has(array[1])) {
+                    rule = array[0];
+                    first.add(rule);
+                }
+            });
+
             return {
                 rule: this.rule,
-                first: this.first,
+                first,
                 pointer: left.index,
                 offset: false,
                 error: true,
@@ -127,10 +152,21 @@ export namespace generator {
             };
         }
 
-        private createTerminalToken(): LiteralToken {
+        private createTerminalToken(tokensLexer: string[]): LiteralToken {
+            let rule = "";
+            tokensLexer.forEach(token => {
+                const array = token.split(" ");
+                if (this.rule === array[1]) {
+                    rule = array[0];
+                }
+            });
+
+            const first: Set<Literal> = new Set<Literal>();
+            first.add(rule);
+
             return {
-                rule: this.rule,
-                first: this.first,
+                rule,
+                first,
                 pointer: !this.last ? this.index + 1 : null,
                 offset: true,
                 error: true,
@@ -142,7 +178,7 @@ export namespace generator {
         private createEmptyToken(): LiteralToken {
             return {
                 rule: this.rule,
-                first: factory.createLiteralSet([END]),
+                first: factory.createLiteralSet(["END"]),
                 pointer: null,
                 offset: false,
                 error: true,

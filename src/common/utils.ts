@@ -1,5 +1,5 @@
 export namespace utils {
-    const STACK_REG_EXP = new RegExp("<(?:(?!<|>).)+>|([^-<> ]+)", "gi");
+    const STACK_REG_EXP = new RegExp("<(?:(?!<|>).)+>|(?!->)([^<> ]+)", "gi");
 
     export function useSafePush<T, P extends T[] | Set<T>>(map: Map<T, P>, factory: (value: T) => P) {
         const isP = (v: T | P): v is P => Array.isArray(v) || v instanceof Set;

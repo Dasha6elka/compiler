@@ -3,8 +3,12 @@ import { TokenTable, SymbolType, RuleValue, GrammarValue } from "../common/commo
 import { END } from "../common/constants";
 import { parser } from "./parser";
 import { factory } from "../common/factory";
+import { lexer } from "../lexer";
 
 describe("generator", () => {
+    let tokensLexer: string[] = [];
+    tokensLexer = lexer.main("./lexer.txt", tokensLexer);
+
     describe("<S>->if/if", () => {
         const LITERALS = {
             S: "S",
@@ -32,7 +36,7 @@ describe("generator", () => {
         ];
 
         it("should create table with 2 rows", () => {
-            const table: TokenTable = generator.exec(rules, grammars);
+            const table: TokenTable = generator.exec(rules, grammars, tokensLexer);
 
             const result: TokenTable = factory.createTokenTable();
             result.set(0, {
@@ -65,6 +69,8 @@ describe("generator", () => {
             A: "A",
             B: "B",
             e: "e",
+            INT_NUMBER: "INT_NUMBER",
+            S_PLUS: "PLUS",
         };
 
         const rules: RuleValue[] = [
@@ -143,7 +149,7 @@ describe("generator", () => {
         ];
 
         it("should create table with 9 rows", () => {
-            const table: TokenTable = generator.exec(rules, grammars);
+            const table: TokenTable = generator.exec(rules, grammars, tokensLexer);
 
             const expected: TokenTable = factory.createTokenTable();
             expected.set(0, {
@@ -152,7 +158,7 @@ describe("generator", () => {
                 rule: LITERALS.A,
                 offset: false,
                 pointer: 3,
-                first: factory.createLiteralSet([LITERALS.FIVE]),
+                first: factory.createLiteralSet([LITERALS.INT_NUMBER]),
                 stack: false,
             });
             expected.set(1, {
@@ -161,7 +167,7 @@ describe("generator", () => {
                 rule: LITERALS.B,
                 offset: false,
                 pointer: 5,
-                first: factory.createLiteralSet([LITERALS.PLUS]),
+                first: factory.createLiteralSet([LITERALS.S_PLUS]),
                 stack: false,
             });
             expected.set(2, {
@@ -176,10 +182,10 @@ describe("generator", () => {
             expected.set(3, {
                 end: false,
                 error: true,
-                rule: LITERALS.FIVE,
+                rule: LITERALS.INT_NUMBER,
                 offset: true,
                 pointer: 4,
-                first: factory.createLiteralSet([LITERALS.FIVE]),
+                first: factory.createLiteralSet([LITERALS.INT_NUMBER]),
                 stack: false,
             });
             expected.set(4, {
@@ -188,25 +194,25 @@ describe("generator", () => {
                 rule: LITERALS.B,
                 offset: false,
                 pointer: 1,
-                first: factory.createLiteralSet([LITERALS.PLUS, END]),
+                first: factory.createLiteralSet([LITERALS.S_PLUS, END]),
                 stack: false,
             });
             expected.set(5, {
                 end: false,
                 error: true,
-                rule: LITERALS.PLUS,
+                rule: LITERALS.S_PLUS,
                 offset: true,
                 pointer: 6,
-                first: factory.createLiteralSet([LITERALS.PLUS]),
+                first: factory.createLiteralSet([LITERALS.S_PLUS]),
                 stack: false,
             });
             expected.set(6, {
                 end: false,
                 error: true,
-                rule: LITERALS.FIVE,
+                rule: LITERALS.INT_NUMBER,
                 offset: true,
                 pointer: 7,
-                first: factory.createLiteralSet([LITERALS.FIVE]),
+                first: factory.createLiteralSet([LITERALS.INT_NUMBER]),
                 stack: false,
             });
             expected.set(7, {
@@ -215,7 +221,7 @@ describe("generator", () => {
                 rule: LITERALS.B,
                 offset: false,
                 pointer: 1,
-                first: factory.createLiteralSet([LITERALS.PLUS, END]),
+                first: factory.createLiteralSet([LITERALS.S_PLUS, END]),
                 stack: false,
             });
             expected.set(8, {

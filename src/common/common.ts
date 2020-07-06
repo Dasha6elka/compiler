@@ -41,7 +41,7 @@ export enum SymbolType {
 }
 
 export interface InputToken {
-    visit(table: TokenTable): void;
+    visit(table: TokenTable, tokensLexer: string[]): void;
 }
 
 export class LiteralIterator implements Iterator<Literal> {

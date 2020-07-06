@@ -176,6 +176,37 @@ describe("parser", () => {
         expect(actual).toEqual(expected);
     });
 
+    describe("factorization hardest", () => {
+        const input = `<Z>-><S> ⊥
+<S>-><T><A0>
+<A0>->+ <A><A0>
+<A0>->e
+<T>-><A><B0>
+<B0>->* <A><B0>
+<B0>->e
+<A>->- <A>
+<A>->( <A> )
+<A>->hex
+<A>->identification
+`;
+
+        const actual = parser.factorization(input);
+        const expected = `<Z>-><S> ⊥
+<S>-><T> <A0>
+<A0>->+ <A> <A0>
+<A0>->e
+<T>-><A> <B0>
+<B0>->* <A> <B0>
+<B0>->e
+<A>->- <A>
+<A>->( <A> )
+<A>->hex
+<A>->identification
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
     describe("left resursion simple", () => {
         const input = `
 <A>-><A> + 5
@@ -246,6 +277,35 @@ describe("parser", () => {
 <A0>->e
 <A>->( <A> )
 <A>->i
+`;
+
+        expect(actual).toEqual(expected);
+    });
+
+    describe("left resursion hardest", () => {
+        const input = `<Z>-><S>⊥
+<S>-><S>+<A>
+<S>-><T>
+<T>-><T>*<A>
+<T>-><A>
+<A>->-<A>
+<A>->(<A>)
+<A>->hex
+<A>->identification
+`;
+
+        const actual = parser.leftRecursion(input);
+        const expected = `<Z>-><S> ⊥
+<S>-><T><A0>
+<A0>->+ <A><A0>
+<A0>->e
+<T>-><A><B0>
+<B0>->* <A><B0>
+<B0>->e
+<A>->- <A>
+<A>->( <A> )
+<A>->hex
+<A>->identification
 `;
 
         expect(actual).toEqual(expected);

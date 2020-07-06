@@ -1,38 +1,49 @@
-import { TokenTable, Pointer, Stack, Literal, LiteralToken } from "../common/common";
+import { TokenTable, Pointer, Stack, Literal } from "../common/common";
 import { exceptions } from "./exceptions";
 import { EMPTY, END } from "../common/constants";
-import { lexer } from "../../../Lexer/src";
+import { lexer } from "../lexer";
 
 export namespace analyzer {
-    type ExecError = exceptions.analyzer.EmptyStackException | exceptions.analyzer.IncorrectSequenceOrderException;
+    type ExecError =
+        | exceptions.analyzer.EmptyStackException
+        | exceptions.analyzer.IncorrectSequenceOrderException
+        | exceptions.analyzer.IncorrectTokens;
 
     export interface ExecResult {
         ok: boolean;
         error: ExecError | null;
     }
 
-    export function exec(table: TokenTable, seq: Iterator<Literal>): ExecResult {
+    export function exec(table: TokenTable, input: string[]): ExecResult {
         const stack: Stack<Pointer> = [];
 
+        const inputFile: string = "./lexer.txt";
         let pointer: Pointer = 0;
         let top = table.get(pointer);
 
         let end = false;
+
+        let inputSumbolsArray: string[] = [];
+
+        const seq: Iterator<string> = input[Symbol.iterator]();
         let offset: Literal | null = seq.next().value ?? null;
+        while (offset) {
+            inputSumbolsArray.push(offset);
+            offset = seq.next().value;
+        }
 
-        let tokensLexer: string[] = [];
-        tokensLexer = lexer.main("./lexer.txt", "./tokens.txt", tokensLexer);
-        let tokensArray: string[] = [];
+        const s: Iterator<string> = input[Symbol.iterator]();
 
-        tokensLexer.forEach(token => {
-            const array = token.split(" ");
-            tokensArray.push(array[1]);
-        });
+        let offsetArray: string[] = getTokens(inputSumbolsArray);
 
+        const tokensArray: string[] = getTokens(inputFile);
+
+        let i: number = 0;
+        let first: string = offsetArray[i];
         while (!(end && !stack.length && top?.end)) {
-            if (!top?.error && ((offset && !top?.first.has(offset)) || offset == null)) {
+            if (!top?.error && ((first && !top?.first.has(first)) || first == null)) {
                 const array = Array.from(table.entries());
-                while (offset && !top?.first.has(offset) && !top?.error) {
+                while (first && !top?.first.has(first) && !top?.error) {
                     const [index] = array.find(([, token]) => token === top)!;
                     top = table.get(index + 1);
                 }
@@ -44,7 +55,7 @@ export namespace analyzer {
                 stack.push(index + 1);
             }
 
-            if (top?.error && offset && !top?.first.has(offset) && offset === EMPTY) {
+            if (top?.error && first && !top?.first.has(first) && first === "EMPTY") {
                 const result: ExecResult = {
                     ok: false,
                     error: new exceptions.analyzer.IncorrectSequenceOrderException(),
@@ -52,18 +63,19 @@ export namespace analyzer {
                 return result;
             }
 
-            if (offset && top?.first.has(offset) && top?.offset) {
-                const it = seq.next();
-                if (!tokensArray.includes(it.value) && it.value != END) {
+            if (first && top?.first.has(first) && top?.offset) {
+                const it = s.next();
+                if (!tokensArray.includes(first) && first != "END") {
                     const result: ExecResult = {
                         ok: false,
                         error: new exceptions.analyzer.IncorrectTokens(),
                     };
                     return result;
                 }
-                offset = it.value ?? null;
+                i++;
+                first = offsetArray[i];
                 end = !!it.done;
-            } else if (offset && !top?.first.has(offset) && top?.offset) {
+            } else if (first && !top?.first.has(first) && top?.offset) {
                 const result: ExecResult = {
                     ok: false,
                     error: new exceptions.analyzer.IncorrectSequenceOrderException(),
@@ -71,7 +83,7 @@ export namespace analyzer {
                 return result;
             }
 
-            if (offset == END) {
+            if (first == "END") {
                 end = true;
             }
 
@@ -80,10 +92,11 @@ export namespace analyzer {
                 while (nullStackPointer) {
                     const head = stack.pop();
                     top = table.get(head!);
-                    nullStackPointer = offset === END && top?.first.has(offset) ? false : !top?.pointer;
-                    if (offset && top?.first.has(offset) && top?.offset) {
-                        const it = seq.next();
-                        offset = it.value ?? null;
+                    nullStackPointer = first === "END" && top?.first.has(first) ? false : !top?.pointer;
+                    if (first && top?.first.has(first) && top?.offset) {
+                        const it = s.next();
+                        i++;
+                        first = offsetArray[i];
                         end = !!it.done;
                     }
                 }
@@ -98,7 +111,7 @@ export namespace analyzer {
             pointer = top?.pointer ?? null;
             if (pointer != null) {
                 top = table.get(pointer);
-                if (offset && !top?.first.has(offset) && top?.pointer == null) {
+                if (first && !top?.first.has(first) && top?.pointer == null) {
                     const result: ExecResult = {
                         ok: false,
                         error: new exceptions.analyzer.IncorrectSequenceOrderException(),
@@ -114,4 +127,17 @@ export namespace analyzer {
         };
         return result;
     }
+}
+
+function getTokens(inputFile: string | string[]): string[] {
+    let tokensLexer: string[] = [];
+    tokensLexer = lexer.main(inputFile, tokensLexer);
+    let tokensArray: string[] = [];
+
+    tokensLexer.forEach(token => {
+        const array = token.split(" ");
+        tokensArray.push(array[0]);
+    });
+
+    return tokensArray;
 }
