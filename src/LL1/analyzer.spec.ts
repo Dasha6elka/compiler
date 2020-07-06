@@ -1,5 +1,5 @@
 import { analyzer } from "./analyzer";
-import { LiteralToken, LiteralIterator } from "../common/common";
+import { LiteralToken } from "../common/common";
 import { END } from "../common/constants";
 import { exceptions } from "./exceptions";
 import { factory } from "../common/factory";

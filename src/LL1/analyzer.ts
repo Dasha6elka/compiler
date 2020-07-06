@@ -1,6 +1,5 @@
 import { TokenTable, Pointer, Stack, Literal } from "../common/common";
 import { exceptions } from "./exceptions";
-import { EMPTY, END } from "../common/constants";
 import { lexer } from "../lexer";
 
 export namespace analyzer {
