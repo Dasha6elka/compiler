@@ -59,16 +59,7 @@ export namespace generator {
         }
 
         visit(table: TokenTable, tokensLexer: string[]): void {
-            let rule = "";
-            let first: Set<Literal> = new Set<Literal>();
-
-            tokensLexer.forEach(token => {
-                const array = token.split(" ");
-                if (this.first.has(array[1])) {
-                    rule = array[0];
-                    first.add(rule);
-                }
-            });
+            let first: Set<Literal> = isLexerToken(tokensLexer, this.first);
 
             if (first.size === 0) {
                 first = this.first;
@@ -130,16 +121,7 @@ export namespace generator {
         }
 
         private createNonterminalToken(left: RuleToken, tokensLexer: string[]): LiteralToken {
-            let rule = "";
-            const first: Set<Literal> = new Set<Literal>();
-
-            tokensLexer.forEach(token => {
-                const array = token.split(" ");
-                if (this.first.has(array[1])) {
-                    rule = array[0];
-                    first.add(rule);
-                }
-            });
+            const first: Set<Literal> = isLexerToken(tokensLexer, this.first);
 
             return {
                 rule: this.rule,
@@ -186,5 +168,20 @@ export namespace generator {
                 end: this.end,
             };
         }
+    }
+
+    function isLexerToken(tokensLexer: string[], thisFirst: LiteralSet): Set<Literal> {
+        const first: Set<Literal> = new Set<Literal>();
+        let rule = "";
+
+        tokensLexer.forEach(token => {
+            const array = token.split(" ");
+            if (thisFirst.has(array[1])) {
+                rule = array[0];
+                first.add(rule);
+            }
+        });
+
+        return first;
     }
 }
