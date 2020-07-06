@@ -16,17 +16,19 @@ const args = [
 <A>->hex
 <A>->identification
 `,
-    "- ( - i ) * - i ⊥",
+    "-(-i)*-i⊥",
 ];
 
 function main() {
     let tokensLexer: string[] = [];
     tokensLexer = lexer.main("./lexer.txt", tokensLexer);
 
+    let tokensInput: string[] = [];
+    tokensInput = lexer.main([args[1]], tokensInput);
+
     let input = args[0].trim();
     input = parser.leftRecursion(input);
     input = parser.factorization(input);
-    const seq = args[1].split(" ");
     const options = parser.optionize(input);
     const table = parser.parse(input);
     set.exec(table, options, input);
@@ -35,7 +37,7 @@ function main() {
     const tokens = generator.exec(rules, grammars, tokensLexer);
     const map = Array.from(options).map(option => option.grammar.size);
     parser.pointerize(tokens, rules, map);
-    const result = analyzer.exec(tokens, seq);
+    const result = analyzer.exec(tokens, tokensInput);
     console.log(result);
 }
 

@@ -22,18 +22,11 @@ export namespace analyzer {
 
         let end = false;
 
-        let inputSumbolsArray: string[] = [];
+        const inputTokens: string[] = getTokensSymbol(input, 1);
 
-        const seq: Iterator<string> = input[Symbol.iterator]();
-        let offset: Literal | null = seq.next().value ?? null;
-        while (offset) {
-            inputSumbolsArray.push(offset);
-            offset = seq.next().value;
-        }
+        const seq: Iterator<string> = inputTokens[Symbol.iterator]();
 
-        const s: Iterator<string> = input[Symbol.iterator]();
-
-        let offsetArray: string[] = getTokens(inputSumbolsArray);
+        let offsetArray: string[] = getTokensSymbol(input, 0);
 
         const tokensArray: string[] = getTokens(inputFile);
 
@@ -63,7 +56,7 @@ export namespace analyzer {
             }
 
             if (first && top?.first.has(first) && top?.offset) {
-                const it = s.next();
+                const it = seq.next();
                 if (!tokensArray.includes(first) && first != "END") {
                     const result: ExecResult = {
                         ok: false,
@@ -93,7 +86,7 @@ export namespace analyzer {
                     top = table.get(head!);
                     nullStackPointer = first === "END" && top?.first.has(first) ? false : !top?.pointer;
                     if (first && top?.first.has(first) && top?.offset) {
-                        const it = s.next();
+                        const it = seq.next();
                         i++;
                         first = offsetArray[i];
                         end = !!it.done;
@@ -128,7 +121,7 @@ export namespace analyzer {
     }
 }
 
-function getTokens(inputFile: string | string[]): string[] {
+function getTokens(inputFile: string): string[] {
     let tokensLexer: string[] = [];
     tokensLexer = lexer.main(inputFile, tokensLexer);
     let tokensArray: string[] = [];
@@ -136,6 +129,17 @@ function getTokens(inputFile: string | string[]): string[] {
     tokensLexer.forEach(token => {
         const array = token.split(" ");
         tokensArray.push(array[0]);
+    });
+
+    return tokensArray;
+}
+
+function getTokensSymbol(inputTokens: string[], position: number): string[] {
+    let tokensArray: string[] = [];
+
+    inputTokens.forEach(token => {
+        const array = token.split(" ");
+        tokensArray.push(array[position]);
     });
 
     return tokensArray;

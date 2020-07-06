@@ -3,6 +3,7 @@ import { LiteralToken } from "../common/common";
 import { END } from "../common/constants";
 import { exceptions } from "./exceptions";
 import { factory } from "../common/factory";
+import { lexer } from "../lexer";
 
 describe("analyzer", () => {
     describe("symbols [A, B, 5, +, e]", () => {
@@ -105,7 +106,11 @@ describe("analyzer", () => {
 
         it("should pass on 5+5", () => {
             const input = [LITERALS.FIVE, LITERALS.PLUS, LITERALS.FIVE, END];
-            const result = analyzer.exec(table, input);
+
+            let tokensInput: string[] = [];
+            tokensInput = lexer.main(input, tokensInput);
+
+            const result = analyzer.exec(table, tokensInput);
             expect(result).toMatchObject({
                 ok: true,
                 error: null,
@@ -114,7 +119,11 @@ describe("analyzer", () => {
 
         it("should fail on 5+5++", () => {
             const input = [LITERALS.FIVE, LITERALS.PLUS, LITERALS.FIVE, LITERALS.PLUS, LITERALS.PLUS, END];
-            const result = analyzer.exec(table, input);
+
+            let tokensInput: string[] = [];
+            tokensInput = lexer.main(input, tokensInput);
+
+            const result = analyzer.exec(table, tokensInput);
             expect(result).toMatchObject({
                 ok: false,
                 error: new exceptions.analyzer.IncorrectSequenceOrderException(),
@@ -330,7 +339,11 @@ describe("analyzer", () => {
 
         it("should pass on 5+(i)", () => {
             const input = [LITERALS.FIVE, LITERALS.PLUS, LITERALS.OB, LITERALS.i, LITERALS.CB, END];
-            const result = analyzer.exec(table, input);
+
+            let tokensInput: string[] = [];
+            tokensInput = lexer.main(input, tokensInput);
+
+            const result = analyzer.exec(table, tokensInput);
             expect(result).toMatchObject({
                 ok: true,
                 error: null,
@@ -350,7 +363,11 @@ describe("analyzer", () => {
                 LITERALS.i,
                 END,
             ];
-            const result = analyzer.exec(table, input);
+
+            let tokensInput: string[] = [];
+            tokensInput = lexer.main(input, tokensInput);
+
+            const result = analyzer.exec(table, tokensInput);
             expect(result).toMatchObject({
                 ok: true,
                 error: null,
@@ -369,7 +386,11 @@ describe("analyzer", () => {
                 LITERALS.PLUS,
                 END,
             ];
-            const result = analyzer.exec(table, input);
+
+            let tokensInput: string[] = [];
+            tokensInput = lexer.main(input, tokensInput);
+
+            const result = analyzer.exec(table, tokensInput);
             expect(result).toMatchObject({
                 ok: false,
                 error: new exceptions.analyzer.IncorrectSequenceOrderException(),

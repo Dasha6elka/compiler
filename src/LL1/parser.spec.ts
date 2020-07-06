@@ -13,7 +13,7 @@ describe("parser", () => {
         it("should parse <A>->5<B>  <B>->+5<B> <B>->e", () => {
             const input = `
 <A>->5<B>
-<B>->+5<B>
+<B>->+ 5<B>
 <B>->e
             `;
 

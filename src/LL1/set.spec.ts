@@ -7,9 +7,9 @@ import { END } from "../common/constants";
 describe("generator", () => {
     describe("<S>->a<A>  <S>->b  <A>->c<A><S>  <A>->e", () => {
         const input = `
-<S>->a<A>
+<S>->a <A>
 <S>->b
-<A>->c<A><S>
+<A>->c <A><S>
 <A>->e
 `;
         const TERMINALS = {
@@ -73,7 +73,7 @@ describe("generator", () => {
             expected.add({
                 rule: TERMINALS.A,
                 grammar: factory.createLiteralSet([NON_TERMINALS.e]),
-                first: factory.createLiteralSet([NON_TERMINALS.c, NON_TERMINALS.a, NON_TERMINALS.b, END]),
+                first: factory.createLiteralSet([END, NON_TERMINALS.c, NON_TERMINALS.a, NON_TERMINALS.b]),
             });
 
             Array.from(expected.values()).forEach((expectedValue, index) => {
