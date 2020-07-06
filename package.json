@@ -22,11 +22,5 @@
     "prettier": "^2.0.5",
     "ts-jest": "^25.5.1",
     "typedoc": "^0.17.0-3"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn pretty && git add .",
-      "pre-push": "yarn coverage"
-    }
   }
 }
