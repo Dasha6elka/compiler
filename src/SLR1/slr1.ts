@@ -96,6 +96,27 @@ export namespace slr1 {
             tempStack = _.uniqWith(tempStack, _.isEqual);
         }
 
+        let tokens: any[] = [];
+
+        rows.forEach((row: Row) => {
+            tokens.push(row.row);
+        });
+
+        rows.forEach((row: Row) => {
+            row.value.forEach((val: any) => {
+                tokens.forEach((token: any, index: number) => {
+                    const equal = _.isEqual(val.value, token);
+                    if (equal) {
+                        const act: Act = {
+                            value: State.S,
+                            index: index
+                        }
+                        val.value = act;
+                    }
+                });
+            });
+        });
+
         return rows;
     }
 
