@@ -30,7 +30,7 @@ interface Act {
 }
 
 export namespace slr1 {
-    export function exec2(grammars: Grammar[]): Row[] {
+    export function exec(grammars: Grammar[]): Row[] {
         const nonTerminals: Literal[] = _.uniq(_.map(grammars, "nonTerminal"));
 
         const rows: Row[] = [];

@@ -39,7 +39,7 @@ describe("slr1", () => {
             },
         ];
 
-        slr1.exec2(grammars);
+        slr1.exec(grammars);
 
         expected.set(LITERALS.S, [LITERALS.OK, "", "", "", "", "", ""]);
         expected.set(LITERALS.REAL, ["", "S3", "", "", "", "", ""]);
