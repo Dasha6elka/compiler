@@ -10,8 +10,10 @@
     "pretty": "prettier --write src"
   },
   "dependencies": {
+    "@types/lodash": "^4.14.157",
     "@types/node": "^14.0.1",
     "fs": "^0.0.1-security",
+    "lodash": "^4.17.15",
     "ts-node": "^8.10.1",
     "typescript": "^3.9.2"
   },

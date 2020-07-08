@@ -1,106 +1,367 @@
+import _ from "lodash";
 import { END } from "../common/constants";
 import { Grammar, Literal } from "../common/common";
 
-const States = {
+const State = {
     OK: "OK",
     S: "S",
     R: "R",
 };
 
+interface Row {
+    value: Cell[];
+    row: CellValue;
+}
+
+interface Cell {
+    value: any;
+    column: string;
+}
+
+interface CellValue {
+    value: string;
+    grammarIndex: number;
+    positionIndex: number;
+}
+
+interface Act {
+    value: string;
+    index: number;
+}
+
 export namespace slr1 {
-    export function slr1(grammars: Grammar[]): void {
-        const rows: Set<Literal[]> = new Set<Literal[]>();
-        const columns: Literal[] = [];
-        const result: Literal[][] = [];
+    export function exec2(grammars: Grammar[]): void {
+        const nonTerminals: Literal[] = _.uniq(_.map(grammars, "nonTerminal"));
 
-        const non_terminals: Literal[] = [];
+        const grammarIndex = 0;
+        const positionIndex = 0;
 
-        columns.push(grammars[0].non_terminal);
-        grammars.forEach(grammar => {
-            grammar.right_part.forEach(literal => {
-                columns.push(literal);
+        const grammar = grammars[grammarIndex];
+
+        const first: CellValue = {
+            value: grammar.rightPart[positionIndex],
+            grammarIndex,
+            positionIndex,
+        };
+
+        const stack: CellValue[] = [];
+
+        const cells: Cell[] = [];
+        const rows: Row[] = [];
+
+        const isNonTerminal = nonTerminals.includes(first.value);
+        if (isNonTerminal) {
+            rows.push(fillRowNonTerminal(nonTerminals, first, grammars, stack, grammar, first, grammarIndex, cells));
+        } else {
+            rows.push(fillRowTerminal(nonTerminals, first, grammars, stack, grammar, first, grammarIndex, cells));
+        }
+    }
+
+    function fillRowNonTerminal(
+        nonTerminals: string[],
+        first: CellValue,
+        grammars: Grammar[],
+        stack: CellValue[],
+        firstGrammar: Grammar,
+        startToken: CellValue,
+        grammarIndex: number,
+        cells: Cell[],
+    ): Row {
+        let isLastElement = firstGrammar.rightPart[firstGrammar.rightPart.length - 1] === first.value ? true : false;
+
+        return fn(nonTerminals, first, grammars, stack, isLastElement, firstGrammar, startToken, grammarIndex, cells);
+    }
+
+    function fillRowTerminal(
+        nonTerminals: string[],
+        first: CellValue,
+        grammars: Grammar[],
+        stack: CellValue[],
+        firstGrammar: Grammar,
+        startToken: CellValue,
+        grammarIndex: number,
+        cells: Cell[],
+    ) {
+        let isLastElement = firstGrammar.rightPart[firstGrammar.rightPart.length - 1] === first.value ? true : false;
+
+        return fnTerminal(
+            nonTerminals,
+            first,
+            grammars,
+            stack,
+            isLastElement,
+            firstGrammar,
+            startToken,
+            grammarIndex,
+            cells,
+        );
+    }
+
+    function fn(
+        nonTerminals: string[],
+        first: CellValue,
+        grammars: Grammar[],
+        stack: CellValue[],
+        isLastElement: boolean,
+        firstGrammar: Grammar,
+        startToken: CellValue,
+        grammarIndex: number,
+        cells: Cell[],
+    ) {
+        if (isLastElement) {
+            const column = END;
+            const cell: Act = {
+                value: State.R,
+                index: grammarIndex,
+            };
+            cells.push({
+                value: cell,
+                column,
             });
+        }
 
-            non_terminals.push(grammar.non_terminal);
-        });
-        columns.push(END);
+        rec(grammars, first, nonTerminals, stack, startToken, grammarIndex, cells);
 
-        let shift_index: number = 2;
+        const grammarsFirst = getFirstGrammars(grammars, first.value);
 
-        rows.add([grammars[0].non_terminal]);
+        grammarsFirst.forEach(grammar => {
+            if (grammar?.rightPart[0] === first.value) {
+                let positionIndex = 1;
+                const nextToken = grammar?.rightPart[positionIndex];
 
-        let right_part_index = 0;
-
-        let token: Literal = grammars[0].non_terminal;
-        let next_token: Literal = "";
-
-        let result_index = 0;
-        grammars.forEach((grammar, grammar_index) => {
-            if (token === grammar.non_terminal) {
-                next_token = grammar.right_part[right_part_index];
-                columns.forEach(column => {
-                    if (next_token === column) {
-                        result[result_index].push(`${States.S}${shift_index}`);
-                        rows.add([next_token, grammar_index.toString(), right_part_index.toString()]);
-                        result_index++;
-                    } else {
-                        result[result_index].push("");
-                        result_index++;
+                let index = 0;
+                grammars.forEach((gram, ind) => {
+                    if (grammar === gram) {
+                        index = ind;
                     }
                 });
-                right_part_index++;
-                result_index = 0;
 
-                token = next_token;
-                next_token = grammar.right_part[right_part_index];
-                columns.forEach(column => {
-                    if (next_token === undefined && END === column) {
-                        result[result_index].push(`${States.R}${grammar_index}`);
-                        rows.add([next_token, grammar_index.toString(), right_part_index.toString()]);
-                        result_index++;
-                    } else if (!non_terminals.includes(next_token)) {
-                        result[result_index].push(`${States.S}${shift_index}`);
-                        result_index++;
-                    } else {
-                        while (non_terminals.includes(next_token)) {
-                            grammars.forEach((gramm, idx) => {
-                                if (gramm.non_terminal === next_token) {
-                                    columns.forEach((col, i) => {
-                                        if (col === gramm.right_part[0]) {
-                                            result[result_index].push(`${States.S}${shift_index}`);
-                                            rows.add([next_token, idx.toString(), i.toString()]);
-                                            result_index++;
-                                        }
-                                    });
-                                }
-                                next_token = grammar.right_part[0];
+                nextTokenCheck(
+                    nextToken,
+                    stack,
+                    nonTerminals,
+                    grammars,
+                    firstGrammar,
+                    startToken,
+                    grammarIndex,
+                    positionIndex,
+                    index,
+                    cells,
+                );
+            }
+        });
+
+        const row: Row = {
+            value: cells,
+            row: startToken,
+        };
+
+        return row;
+    }
+
+    function getFirstGrammars(grammars: Grammar[], first: string): Grammar[] {
+        const grammarsFirst: Grammar[] = [];
+        grammars.forEach(grammar => {
+            if (grammar.nonTerminal === first) {
+                grammarsFirst.push(grammar);
+            }
+        });
+
+        return grammarsFirst;
+    }
+
+    function nextTokenCheck(
+        token: string,
+        stack: CellValue[],
+        nonTerminals: string[],
+        grammars: Grammar[],
+        firstGrammar: Grammar,
+        startToken: CellValue,
+        grammarIndex: number,
+        positionIndex: number,
+        index: number,
+        cells: Cell[],
+    ) {
+        const column = token;
+        const cell: CellValue = {
+            value: token,
+            grammarIndex: index,
+            positionIndex,
+        };
+        cells.push({
+            value: cell,
+            column,
+        });
+
+        stack.push(cell);
+
+        const next: CellValue = {
+            value: token,
+            grammarIndex: index,
+            positionIndex,
+        };
+
+        fillRowNonTerminal(nonTerminals, next, grammars, stack, firstGrammar, startToken, grammarIndex, cells);
+    }
+
+    function rec(
+        grammars: Grammar[],
+        first: CellValue,
+        nonTerminals: string[],
+        stack: CellValue[],
+        startToken: CellValue,
+        grammarIndex: number,
+        cells: Cell[],
+    ) {
+        const nonTerminalFirst = firstTokenGrammar(grammars, first.value);
+        if (nonTerminalFirst !== undefined) {
+            const token = _.find(grammars, grammar => _.first(grammar.rightPart) === nonTerminalFirst);
+
+            const nonTerminal = token?.nonTerminal!;
+
+            grammars.forEach((grammar, ind) => {
+                grammar.rightPart.forEach((token, positionIndex, array) => {
+                    const isLast = token === array[array.length - 1] ? true : false;
+
+                    if (!isLast && token === nonTerminal) {
+                        const next: CellValue = {
+                            value: nonTerminal,
+                            grammarIndex: ind,
+                            positionIndex,
+                        };
+                        rec(grammars, next, nonTerminals, stack, startToken, grammarIndex, cells);
+                    }
+                });
+            });
+        } else {
+            const nonTerminalStart = firstTokenGrammar(grammars, startToken.value);
+            if (nonTerminalStart !== undefined) {
+                let column = "";
+
+                const grammarsFirst = getFirstGrammars(grammars, first.value);
+
+                grammarsFirst.forEach(gramm => {
+                    if (gramm === grammars[first.grammarIndex]) {
+                        const token = gramm?.rightPart[0]!;
+                        if (token !== startToken.value) {
+                            if (token !== first.value) {
+                                column = token;
+                            } else {
+                                column = gramm?.rightPart[1]!;
+                            }
+
+                            const cell: Act = {
+                                value: State.R,
+                                index: grammarIndex,
+                            };
+                            cells.push({
+                                value: cell,
+                                column,
                             });
                         }
                     }
                 });
             }
+        }
+    }
+
+    function firstTokenGrammar(grammars: Grammar[], startToken: string): string | undefined {
+        return _.find(grammars, grammar => grammar.rightPart[0] === startToken && grammar.rightPart.length === 1)
+            ?.nonTerminal;
+    }
+
+    function fnTerminal(
+        nonTerminals: string[],
+        first: CellValue,
+        grammars: Grammar[],
+        stack: CellValue[],
+        isLastElement: boolean,
+        firstGrammar: Grammar,
+        startToken: CellValue,
+        grammarIndex: number,
+        cells: Cell[],
+    ) {
+        if (isLastElement) {
+            const column = END;
+
+            const cell: Act = {
+                value: State.R,
+                index: grammarIndex,
+            };
+            cells.push({
+                value: cell,
+                column,
+            });
+        }
+
+        rec(grammars, first, nonTerminals, stack, startToken, grammarIndex, cells);
+
+        let next = "";
+        grammars.forEach((grammar, ind) => {
+            grammar.rightPart.forEach((element, index, array) => {
+                const positionIndex = index + 1;
+                const token = array[positionIndex];
+                if (element === first.value && token !== undefined) {
+                    next = token;
+                    push(next, ind, positionIndex, stack, cells);
+                }
+            });
+        });
+        if (nonTerminals.includes(next)) {
+            recDeepTerminal(grammars, next, nonTerminals, stack, startToken, firstGrammar, cells);
+        }
+
+        const row: Row = {
+            value: cells,
+            row: startToken,
+        };
+
+        return row;
+    }
+
+    function recDeepTerminal(
+        grammars: Grammar[],
+        first: string,
+        nonTerminals: string[],
+        stack: CellValue[],
+        startToken: CellValue,
+        firstGrammar: Grammar,
+        cells: Cell[],
+    ) {
+        const grammarsFirst = getFirstGrammars(grammars, first);
+
+        grammars.forEach((gram, grammarIndex) => {
+            if (grammarsFirst.includes(gram)) {
+                grammarsFirst.forEach(grammar => {
+                    if (gram === grammar) {
+                        const positionIndex = 0;
+                        const firstEl = grammar.rightPart[positionIndex];
+                        if (first === firstEl) {
+                            push(firstEl, grammarIndex, positionIndex, stack, cells);
+                        } else if (nonTerminals.includes(firstEl)) {
+                            push(firstEl, grammarIndex, positionIndex, stack, cells);
+                            recDeepTerminal(grammars, firstEl, nonTerminals, stack, startToken, firstGrammar, cells);
+                        } else {
+                            push(firstEl, grammarIndex, positionIndex, stack, cells);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    function push(element: string, grammarIndex: number, positionIndex: number, stack: CellValue[], cells: Cell[]) {
+        const cell: CellValue = {
+            value: element,
+            grammarIndex,
+            positionIndex,
+        };
+
+        cells.push({
+            value: cell,
+            column: element,
         });
 
-        // result_index = 0;
-        // columns.forEach(column => {
-        //     nextToken = grammars[0].right_part[1];
-        //     if (nextToken == undefined && column === END) {
-        //         non_terminals.forEach((non_terminal, index) => {
-        //             if (non_terminal.includes(grammars[0].non_terminal)) {
-        //                 result[result_index].push(`R${index}`);
-        //             }
-        //         })
-        //     } else if (non_terminals.includes(nextToken)){
-        //         grammars.forEach(grammar => {
-        //             if (grammar.non_terminal === nextToken) {
-        //                 grammar.right_part.forEach(value => {
-        //                     if (value === nextToken) {
-
-        //                     }
-        //                 })
-        //             }
-        //         })
-        //     }
-        // });
+        stack.push(cell);
     }
 }

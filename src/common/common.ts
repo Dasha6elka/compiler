@@ -11,8 +11,8 @@ export interface LiteralOption {
 }
 
 export interface Grammar {
-    non_terminal: Literal;
-    right_part: Literal[];
+    nonTerminal: Literal;
+    rightPart: Literal[];
     elements: Literal[];
 }
 

@@ -7,9 +7,7 @@ describe("slr1", () => {
         IDLIST: "idlist",
         ID: "id",
         REAL: "real",
-        A: "A",
-        B: "B",
-        C: "C",
+        ABC: "ABC",
         S: "S",
         COMMA: ",",
         OK: "ok",
@@ -20,28 +18,28 @@ describe("slr1", () => {
 
         const grammars: Grammar[] = [
             {
-                non_terminal: LITERALS.S,
-                right_part: [LITERALS.REAL, LITERALS.IDLIST],
+                nonTerminal: LITERALS.S,
+                rightPart: [LITERALS.REAL, LITERALS.IDLIST],
                 elements: [LITERALS.REAL],
             },
             {
-                non_terminal: LITERALS.IDLIST,
-                right_part: [LITERALS.IDLIST, LITERALS.COMMA, LITERALS.ID],
-                elements: [LITERALS.IDLIST, LITERALS.ID, LITERALS.A, LITERALS.B, LITERALS.C],
+                nonTerminal: LITERALS.IDLIST,
+                rightPart: [LITERALS.IDLIST, LITERALS.COMMA, LITERALS.ID],
+                elements: [LITERALS.IDLIST, LITERALS.ID, LITERALS.ABC],
             },
             {
-                non_terminal: LITERALS.IDLIST,
-                right_part: [LITERALS.ID],
-                elements: [LITERALS.ID, LITERALS.A, LITERALS.B, LITERALS.C],
+                nonTerminal: LITERALS.IDLIST,
+                rightPart: [LITERALS.ID],
+                elements: [LITERALS.ID, LITERALS.ABC],
             },
             {
-                non_terminal: LITERALS.ID,
-                right_part: [LITERALS.A, LITERALS.B, LITERALS.C],
-                elements: [LITERALS.A, LITERALS.B, LITERALS.C],
+                nonTerminal: LITERALS.ID,
+                rightPart: [LITERALS.ABC],
+                elements: [LITERALS.ABC],
             },
         ];
 
-        slr1.slr1(grammars);
+        slr1.exec2(grammars);
 
         expected.set(LITERALS.S, [LITERALS.OK, "", "", "", "", "", ""]);
         expected.set(LITERALS.REAL, ["", "S3", "", "", "", "", ""]);

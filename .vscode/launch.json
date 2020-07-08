@@ -14,7 +14,12 @@
               "--runInBand"
             ],
             "internalConsoleOptions": "neverOpen",
-            "port": 9229
+            "port": 9229,
+            "skipFiles": [
+                "${workspaceRoot}/node_modules/**/*.js",
+                "<node_internals>/**/*.js"
+            ],
+            "smartStep": false
         },
         {
             "name": "Launch App",
