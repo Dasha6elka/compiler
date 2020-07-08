@@ -10,7 +10,7 @@ const State = {
 
 interface Row {
     value: Cell[];
-    row: CellValue;
+    row: CellValue | string;
 }
 
 interface Cell {
@@ -30,13 +30,20 @@ interface Act {
 }
 
 export namespace slr1 {
-    export function exec2(grammars: Grammar[]): void {
+    export function exec2(grammars: Grammar[]): Row[] {
         const nonTerminals: Literal[] = _.uniq(_.map(grammars, "nonTerminal"));
 
-        const grammarIndex = 0;
+        const rows: Row[] = [];
+
+        rows.push(getFirstRow(grammars));
+
+        const stack: CellValue[] = [];
+        let tempStack: CellValue[] = [];
+
+        let grammarIndex = 0;
         const positionIndex = 0;
 
-        const grammar = grammars[grammarIndex];
+        let grammar = grammars[grammarIndex];
 
         const first: CellValue = {
             value: grammar.rightPart[positionIndex],
@@ -44,17 +51,90 @@ export namespace slr1 {
             positionIndex,
         };
 
-        const stack: CellValue[] = [];
+        stack.push(first);
+        tempStack.push(first);
 
-        const cells: Cell[] = [];
-        const rows: Row[] = [];
+        while (stack.length > 0) {
+            let res: any;
+            const cells: Cell[] = [];
 
-        const isNonTerminal = nonTerminals.includes(first.value);
-        if (isNonTerminal) {
-            rows.push(fillRowNonTerminal(nonTerminals, first, grammars, stack, grammar, first, grammarIndex, cells));
-        } else {
-            rows.push(fillRowTerminal(nonTerminals, first, grammars, stack, grammar, first, grammarIndex, cells));
+            const firstValue = stack.pop()!;
+
+            grammarIndex = firstValue.grammarIndex;
+            grammar = grammars[grammarIndex];
+
+            const isNonTerminal = nonTerminals.includes(firstValue.value);
+            if (isNonTerminal) {
+                res = fillRowNonTerminal(
+                    nonTerminals,
+                    firstValue,
+                    grammars,
+                    stack,
+                    grammar,
+                    firstValue,
+                    grammarIndex,
+                    cells,
+                    tempStack,
+                );
+            } else {
+                res = fillRowTerminal(
+                    nonTerminals,
+                    firstValue,
+                    grammars,
+                    stack,
+                    grammar,
+                    firstValue,
+                    grammarIndex,
+                    cells,
+                    tempStack,
+                );
+            }
+
+            rows.push(res.row);
+
+            tempStack.push(...res.stack);
+            tempStack = _.uniqWith(tempStack, _.isEqual);
         }
+
+        return rows;
+    }
+
+    function isSame(tempStack: CellValue[], row: CellValue) {
+        let flag = false;
+        tempStack.forEach(temp => {
+            if (_.isEqual(temp, row)) {
+                flag = true;
+            }
+        });
+
+        return flag;
+    }
+
+    function getFirstRow(grammars: Grammar[]): Row {
+        const cells: Cell[] = [];
+        const row = grammars[0].nonTerminal;
+
+        cells.push({
+            value: State.OK,
+            column: row,
+        });
+
+        const value = grammars[0].rightPart[0];
+        const cell: CellValue = {
+            value: value,
+            grammarIndex: 0,
+            positionIndex: 0,
+        };
+
+        cells.push({
+            value: cell,
+            column: value,
+        });
+
+        return {
+            value: cells,
+            row,
+        };
     }
 
     function fillRowNonTerminal(
@@ -66,10 +146,22 @@ export namespace slr1 {
         startToken: CellValue,
         grammarIndex: number,
         cells: Cell[],
-    ): Row {
+        tempStack: CellValue[],
+    ) {
         let isLastElement = firstGrammar.rightPart[firstGrammar.rightPart.length - 1] === first.value ? true : false;
 
-        return fn(nonTerminals, first, grammars, stack, isLastElement, firstGrammar, startToken, grammarIndex, cells);
+        return fn(
+            nonTerminals,
+            first,
+            grammars,
+            stack,
+            isLastElement,
+            firstGrammar,
+            startToken,
+            grammarIndex,
+            cells,
+            tempStack,
+        );
     }
 
     function fillRowTerminal(
@@ -81,6 +173,7 @@ export namespace slr1 {
         startToken: CellValue,
         grammarIndex: number,
         cells: Cell[],
+        tempStack: CellValue[],
     ) {
         let isLastElement = firstGrammar.rightPart[firstGrammar.rightPart.length - 1] === first.value ? true : false;
 
@@ -94,6 +187,7 @@ export namespace slr1 {
             startToken,
             grammarIndex,
             cells,
+            tempStack,
         );
     }
 
@@ -107,6 +201,7 @@ export namespace slr1 {
         startToken: CellValue,
         grammarIndex: number,
         cells: Cell[],
+        tempStack: CellValue[],
     ) {
         if (isLastElement) {
             const column = END;
@@ -147,6 +242,7 @@ export namespace slr1 {
                     positionIndex,
                     index,
                     cells,
+                    tempStack,
                 );
             }
         });
@@ -156,7 +252,10 @@ export namespace slr1 {
             row: startToken,
         };
 
-        return row;
+        return {
+            row,
+            stack,
+        };
     }
 
     function getFirstGrammars(grammars: Grammar[], first: string): Grammar[] {
@@ -181,6 +280,7 @@ export namespace slr1 {
         positionIndex: number,
         index: number,
         cells: Cell[],
+        tempStack: CellValue[],
     ) {
         const column = token;
         const cell: CellValue = {
@@ -193,7 +293,9 @@ export namespace slr1 {
             column,
         });
 
-        stack.push(cell);
+        if (!isSame(tempStack, cell)) {
+            stack.push(cell);
+        }
 
         const next: CellValue = {
             value: token,
@@ -201,7 +303,17 @@ export namespace slr1 {
             positionIndex,
         };
 
-        fillRowNonTerminal(nonTerminals, next, grammars, stack, firstGrammar, startToken, grammarIndex, cells);
+        fillRowNonTerminal(
+            nonTerminals,
+            next,
+            grammars,
+            stack,
+            firstGrammar,
+            startToken,
+            grammarIndex,
+            cells,
+            tempStack,
+        );
     }
 
     function rec(
@@ -280,6 +392,7 @@ export namespace slr1 {
         startToken: CellValue,
         grammarIndex: number,
         cells: Cell[],
+        tempStack: CellValue[],
     ) {
         if (isLastElement) {
             const column = END;
@@ -303,12 +416,12 @@ export namespace slr1 {
                 const token = array[positionIndex];
                 if (element === first.value && token !== undefined) {
                     next = token;
-                    push(next, ind, positionIndex, stack, cells);
+                    push(next, ind, positionIndex, stack, cells, tempStack);
                 }
             });
         });
         if (nonTerminals.includes(next)) {
-            recDeepTerminal(grammars, next, nonTerminals, stack, startToken, firstGrammar, cells);
+            recDeepTerminal(grammars, next, nonTerminals, stack, startToken, firstGrammar, cells, tempStack);
         }
 
         const row: Row = {
@@ -316,7 +429,10 @@ export namespace slr1 {
             row: startToken,
         };
 
-        return row;
+        return {
+            row,
+            stack,
+        };
     }
 
     function recDeepTerminal(
@@ -327,6 +443,7 @@ export namespace slr1 {
         startToken: CellValue,
         firstGrammar: Grammar,
         cells: Cell[],
+        tempStack: CellValue[],
     ) {
         const grammarsFirst = getFirstGrammars(grammars, first);
 
@@ -337,12 +454,21 @@ export namespace slr1 {
                         const positionIndex = 0;
                         const firstEl = grammar.rightPart[positionIndex];
                         if (first === firstEl) {
-                            push(firstEl, grammarIndex, positionIndex, stack, cells);
+                            return;
                         } else if (nonTerminals.includes(firstEl)) {
-                            push(firstEl, grammarIndex, positionIndex, stack, cells);
-                            recDeepTerminal(grammars, firstEl, nonTerminals, stack, startToken, firstGrammar, cells);
+                            push(firstEl, grammarIndex, positionIndex, stack, cells, tempStack);
+                            recDeepTerminal(
+                                grammars,
+                                firstEl,
+                                nonTerminals,
+                                stack,
+                                startToken,
+                                firstGrammar,
+                                cells,
+                                tempStack,
+                            );
                         } else {
-                            push(firstEl, grammarIndex, positionIndex, stack, cells);
+                            push(firstEl, grammarIndex, positionIndex, stack, cells, tempStack);
                         }
                     }
                 });
@@ -350,7 +476,14 @@ export namespace slr1 {
         });
     }
 
-    function push(element: string, grammarIndex: number, positionIndex: number, stack: CellValue[], cells: Cell[]) {
+    function push(
+        element: string,
+        grammarIndex: number,
+        positionIndex: number,
+        stack: CellValue[],
+        cells: Cell[],
+        tempStack: CellValue[],
+    ) {
         const cell: CellValue = {
             value: element,
             grammarIndex,
@@ -362,6 +495,8 @@ export namespace slr1 {
             column: element,
         });
 
-        stack.push(cell);
+        if (!isSame(tempStack, cell)) {
+            stack.push(cell);
+        }
     }
 }
