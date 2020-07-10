@@ -42,6 +42,11 @@ describe("analyzer", () => {
 
         const input: string[] = ["real", "A", END];
 
-        analyzer.exec(rows, input, grammars);
+        const result = analyzer.exec(rows, input, grammars);
+
+        expect(result).toMatchObject({
+            ok: true,
+            error: null,
+        });
     });
 });
