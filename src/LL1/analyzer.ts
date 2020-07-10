@@ -13,7 +13,18 @@ export namespace analyzer {
         error: ExecError | null;
     }
 
-    export function exec(table: TokenTable, input: string[]): ExecResult {
+    export interface ExecResultFailed extends ExecResult {
+        ok: boolean;
+        error: ExecError | null;
+        token: string;
+        line: string;
+        position: string;
+    }
+
+    export function exec(table: TokenTable, input: string): ExecResult | ExecResultFailed {
+        let tokensInput: string[] = [];
+        tokensInput = lexer.main([input], tokensInput);
+
         const stack: Stack<Pointer> = [];
 
         const inputFile: string = "./lexer.txt";
@@ -22,11 +33,13 @@ export namespace analyzer {
 
         let end = false;
 
-        const inputTokens: string[] = getTokensSymbol(input, 1);
+        const inputTokens: string[] = getTokensSymbol(tokensInput, 1);
 
         const seq: Iterator<string> = inputTokens[Symbol.iterator]();
 
-        let offsetArray: string[] = getTokensSymbol(input, 0);
+        let offsetArray: string[] = getTokensSymbol(tokensInput, 0);
+        let linesArray: string[] = getTokensSymbol(tokensInput, 2);
+        let positionArray: string[] = getTokensSymbol(tokensInput, 3);
 
         const tokensArray: string[] = getTokens(inputFile);
 
@@ -48,9 +61,12 @@ export namespace analyzer {
             }
 
             if (top?.error && first && !top?.first.has(first) && first === "EMPTY") {
-                const result: ExecResult = {
+                const result: ExecResultFailed = {
                     ok: false,
                     error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+                    token: offsetArray[i],
+                    line: linesArray[i],
+                    position: positionArray[i],
                 };
                 return result;
             }
@@ -58,9 +74,12 @@ export namespace analyzer {
             if (first && top?.first.has(first) && top?.offset) {
                 const it = seq.next();
                 if (!tokensArray.includes(first) && first != "END") {
-                    const result: ExecResult = {
+                    const result: ExecResultFailed = {
                         ok: false,
                         error: new exceptions.analyzer.IncorrectTokens(),
+                        token: offsetArray[i],
+                        line: linesArray[i],
+                        position: positionArray[i],
                     };
                     return result;
                 }
@@ -68,9 +87,12 @@ export namespace analyzer {
                 first = offsetArray[i];
                 end = !!it.done;
             } else if (first && !top?.first.has(first) && top?.offset) {
-                const result: ExecResult = {
+                const result: ExecResultFailed = {
                     ok: false,
                     error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+                    token: offsetArray[i],
+                    line: linesArray[i],
+                    position: positionArray[i],
                 };
                 return result;
             }
@@ -93,9 +115,12 @@ export namespace analyzer {
                     }
                 }
             } else if (top?.pointer == null && !stack.length && !top?.end && !end) {
-                const result: ExecResult = {
+                const result: ExecResultFailed = {
                     ok: false,
                     error: new exceptions.analyzer.EmptyStackException(),
+                    token: offsetArray[i],
+                    line: linesArray[i],
+                    position: positionArray[i],
                 };
                 return result;
             }
@@ -103,10 +128,13 @@ export namespace analyzer {
             pointer = top?.pointer ?? null;
             if (pointer != null) {
                 top = table.get(pointer);
-                if (first && !top?.first.has(first) && top?.pointer == null) {
-                    const result: ExecResult = {
+                if (first && !top?.first.has(first) && top?.pointer == null && top?.rule !== "e") {
+                    const result: ExecResultFailed = {
                         ok: false,
                         error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+                        token: offsetArray[i],
+                        line: linesArray[i],
+                        position: positionArray[i],
                     };
                     return result;
                 }

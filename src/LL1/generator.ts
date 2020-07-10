@@ -10,6 +10,7 @@ import {
 } from "../common/common";
 import { exceptions } from "./exceptions";
 import { factory } from "../common/factory";
+import { lexer } from "../lexer";
 
 export namespace generator {
     export function exec(rules: RuleValue[], grammars: GrammarValue[], tokensLexer: string[]): TokenTable {
@@ -136,10 +137,12 @@ export namespace generator {
 
         private createTerminalToken(tokensLexer: string[]): LiteralToken {
             let rule = "";
+
+            const tok = getTokens([this.rule]);
             tokensLexer.forEach(token => {
-                const array = token.split(" ");
-                if (this.rule === array[1]) {
-                    rule = array[0];
+                const array = token.split(" ")[0];
+                if (tok[0] === array) {
+                    rule = array;
                 }
             });
 
@@ -174,14 +177,34 @@ export namespace generator {
         const first: Set<Literal> = new Set<Literal>();
         let rule = "";
 
+        let tokens:string[] = [];
+        thisFirst.forEach(token => {
+            tokens.push(token);
+        })
+
+        const tokensInput = getTokens(tokens);
+
         tokensLexer.forEach(token => {
             const array = token.split(" ");
-            if (thisFirst.has(array[1])) {
+            if (tokensInput.includes(array[0])) {
                 rule = array[0];
                 first.add(rule);
             }
         });
 
         return first;
+    }
+
+    function getTokens(input: string[]): string[] {
+        let tokensLexer: string[] = [];
+        tokensLexer = lexer.main(input, tokensLexer);
+        let tokensArray: string[] = [];
+
+        tokensLexer.forEach(token => {
+            const array = token.split(" ");
+            tokensArray.push(array[0]);
+        });
+
+        return tokensArray;
     }
 }

@@ -303,7 +303,6 @@ export namespace parser {
 
     export function parse(input: string): LiteralTable {
         const transitionsMap = transitionize(input);
-        const { nonTerminals } = terminize(input);
 
         const cache = factory.createLiteralTable();
         const cacheSafePush = utils.useSafePush(cache, value => factory.createLiteralSet([value]));

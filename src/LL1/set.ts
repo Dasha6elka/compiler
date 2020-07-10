@@ -1,4 +1,4 @@
-import { LiteralOptions, LiteralTable } from "../common/common";
+import { LiteralOptions, LiteralTable, LiteralSet } from "../common/common";
 import { EMPTY, END } from "../common/constants";
 import { parser } from "./parser";
 import { factory } from "../common/factory";
@@ -12,12 +12,24 @@ export namespace set {
 
             let firstGrammarLiteral = Array.from(option.grammar.values())[0];
             if (literals?.has(firstGrammarLiteral)) {
-                if (nonTerminals.has(firstGrammarLiteral)) {
+                const list: string[] = [];
+                while (nonTerminals.has(firstGrammarLiteral)) {
                     const literals = table.get(firstGrammarLiteral);
-                    literals?.forEach(literal => (firstGrammarLiteral = literal));
+                    literals?.forEach(literal => {
+                        if (terminals.has(literal)) {
+                            list.push(literal);
+                        }
+                        firstGrammarLiteral = literal;
+                    });
                 }
 
-                option.first.add(firstGrammarLiteral);
+                if (terminals.has(firstGrammarLiteral)) {
+                    list.push(firstGrammarLiteral);
+                }
+
+                list.forEach(item => {
+                    option.first.add(item);
+                });
             }
             if (firstGrammarLiteral === EMPTY) {
                 option.first.add(END);
@@ -32,16 +44,24 @@ export namespace set {
         for (const pair of table) {
             const [, values] = pair;
             for (const value of values) {
-                if (nonTerminals.has(value)) {
-                    const literals = table.get(value);
-                    literals?.forEach(literal => values.add(literal));
-                }
+                rec(nonTerminals, value, table, values);
             }
         }
 
         for (const [key, values] of table) {
             const onlyTerminals = Array.from(values).filter(value => terminals.has(value) || value === END);
             table.set(key, factory.createLiteralSet(onlyTerminals));
+        }
+    }
+
+    function rec(nonTerminals: LiteralSet, value: string, table: LiteralTable, values: LiteralSet) {
+        if (nonTerminals.has(value)) {
+            const literals = table.get(value);
+            literals?.forEach(literal => {
+                rec(nonTerminals, literal, table, values);
+            });
+        } else {
+            values.add(value);
         }
     }
 }

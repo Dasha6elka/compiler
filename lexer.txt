@@ -1,6 +1,6 @@
 class Foo {
     private double big = 3.2e+23; // Some sort of big value
-    private double small = -4.70e-9; // Some sort of small value
+    private double small = -4.7; // Some sort of small value
 
     private String message = "Foo >> ";
 
@@ -23,10 +23,6 @@ class Foo {
         }
         var secret = hex ^ octal ^ binary;
         println(secret);
-		int A = 5;
-		int B = 6;
-		int S = 7;
-		int i = 0;
 
         String string = " Земля конечно плоская
                       причём ужасно жёсткая
