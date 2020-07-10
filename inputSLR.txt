@@ -1,0 +1,4 @@
+<S>->real<idlist>
+<idlist>-><idlist>,<id>
+<idlist>-><id>
+<id>->A

@@ -1,4 +1,4 @@
-import { LiteralToken, TokenTable, Literal, LiteralSet, LiteralTable, LiteralOption, LiteralOptions } from "./common";
+import { LiteralToken, TokenTable, Literal, LiteralSet, LiteralTable, LiteralOption, LiteralOptions, Grammar, Grammars } from "./common";
 
 export namespace factory {
     export function createTokenTable(iterable?: Iterable<LiteralToken>): TokenTable {

@@ -25,11 +25,11 @@
             "name": "Launch App",
             "type": "node",
             "request": "launch",
-            "args": ["${workspaceRoot}/src/LL1/index.ts"],
+            "args": ["${workspaceRoot}/src/SLR1/index.ts"],
             "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
-            "protocol": "inspector",
+            "protocol": "inspector"
         }
     ]
 }

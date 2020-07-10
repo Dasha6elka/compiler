@@ -45,6 +45,8 @@ export interface Act {
 
 export type LiteralOptions = Set<LiteralOption>;
 
+export type Grammars = Grammar[];
+
 export interface LiteralToken {
     rule: Literal;
     first: LiteralSet;
