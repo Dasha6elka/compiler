@@ -22,7 +22,7 @@ function main() {
     const tokens = generator.exec(rules, grammars, tokensLexer); // готовая таблица
     const map = Array.from(options).map(option => option.grammar.size);
     parser.pointerize(tokens, rules, map);
-    const result = analyzer.exec(tokens, inputString); // бегунок по таблице
+    const result = analyzer.exec(tokens, [inputString]); // бегунок по таблице
     console.log(result);
 }
 

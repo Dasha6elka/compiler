@@ -1,11 +1,11 @@
 import { LiteralOptions, LiteralTable, LiteralSet } from "../common/common";
 import { EMPTY, END } from "../common/constants";
-import { parser } from "./parser";
 import { factory } from "../common/factory";
+import { tokenize } from "../common/parser";
 
 export namespace set {
     export function exec(table: LiteralTable, options: LiteralOptions, input: string): void {
-        const { terminals, nonTerminals } = parser.tokenize(input);
+        const { terminals, nonTerminals } = tokenize(input);
 
         options.forEach(option => {
             const literals = table.get(option.rule);

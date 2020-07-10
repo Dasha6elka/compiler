@@ -21,9 +21,9 @@ export namespace analyzer {
         position: string;
     }
 
-    export function exec(table: TokenTable, input: string): ExecResult | ExecResultFailed {
+    export function exec(table: TokenTable, input: string[]): ExecResult | ExecResultFailed {
         let tokensInput: string[] = [];
-        tokensInput = lexer.main([input], tokensInput);
+        tokensInput = lexer.main(input, tokensInput);
 
         const stack: Stack<Pointer> = [];
 

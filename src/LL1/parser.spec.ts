@@ -1,4 +1,5 @@
 import { parser } from "./parser";
+import { tokenize } from "../common/parser";
 
 describe("parser", () => {
     describe("tokenize", () => {
@@ -22,7 +23,7 @@ describe("parser", () => {
                 nonTerminals: [LITERALS.A, LITERALS.B],
             };
 
-            const actual = parser.tokenize(input);
+            const actual = tokenize(input);
 
             expect(actual.terminals.size).toEqual(expected.terminals.length);
             expect(actual.nonTerminals.size).toEqual(expected.nonTerminals.length);
