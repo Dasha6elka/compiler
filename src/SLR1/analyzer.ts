@@ -18,19 +18,22 @@ export namespace analyzer {
         let symbol: string = input[i];
         stack.push(symbol);
 
-        let act: Act = {
+        let state: Act = {
             value: State.OK,
             index: 0,
         };
 
-        rowStack.push(grammars[0].nonTerminal);
+        rowStack.push(rows[0].row);
 
         let isError = true;
         rows[0].value.forEach(cell => {
             if (cell.column === symbol) {
-                act = cell.value;
-                rowStack.push(act);
+                state = cell.value;
                 isError = false;
+
+                if (input[i + 1] === undefined) {
+                    return;
+                }
 
                 symbol = input[++i];
                 if (symbol === undefined) {
@@ -56,20 +59,21 @@ export namespace analyzer {
 
         let end = false;
 
-        while (!end && stack.length !== 0) {
-            if (act.value === State.S) {
-                const nextRow = rows[act.index];
+        while (!end) {
+            if (state.value === State.S) {
+                const nextRow = rows[state.index];
+                rowStack.push(nextRow.row);
                 let isError = true;
                 nextRow.value.forEach(cell => {
                     if (cell.column === symbol) {
-                        act = cell.value;
-                        rowStack.push(act);
+                        state = cell.value;
                         isError = false;
 
-                        symbol = input[++i];
-                        if (symbol === undefined) {
+                        if (input[i + 1] === undefined) {
                             return;
                         }
+
+                        symbol = input[++i];
 
                         if (symbol === END) {
                             return;
@@ -86,12 +90,11 @@ export namespace analyzer {
 
                     return result;
                 }
-            } else if (act.value === State.R) {
-                const grammar = grammars[act.index];
-                act = rowStack.pop();
+            } else if (state.value === State.R) {
+                const grammar = grammars[state.index];
                 const tokens: string[] = grammar.rightPart.reverse();
                 for (let j = 0; j < tokens.length; j++) {
-                    act = rowStack.pop();
+                    rowStack.pop();
 
                     if (tokens[j] !== stack.pop()) {
                         const result: ExecResult = {
@@ -102,10 +105,26 @@ export namespace analyzer {
                         return result;
                     }
                 }
+                const lastRow = rowStack[rowStack.length - 1];
                 stack.push(grammar.nonTerminal);
+
+                rows.forEach(row => {
+                    if (row.row === lastRow) {
+                        row.value.forEach(value => {
+                            if (value.column === stack[stack.length - 1]) {
+                                if (value.value === State.OK) {
+                                    state.value = State.OK;
+                                    state.index = 0;
+                                } else {
+                                    state = value.value;
+                                }
+                            }
+                        });
+                    }
+                });
             }
 
-            if (symbol === END && stack.length === 0 && rowStack.length === 0) {
+            if (state.value === State.OK) {
                 end = true;
             }
         }
