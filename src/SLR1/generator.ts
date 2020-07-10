@@ -1,35 +1,8 @@
 import _ from "lodash";
 import { END } from "../common/constants";
-import { Grammar, Literal } from "../common/common";
+import { Grammar, Literal, Row, CellValue, Cell, Act, State } from "../common/common";
 
-const State = {
-    OK: "OK",
-    S: "S",
-    R: "R",
-};
-
-interface Row {
-    value: Cell[];
-    row: CellValue | string;
-}
-
-interface Cell {
-    value: any;
-    column: string;
-}
-
-interface CellValue {
-    value: string;
-    grammarIndex: number;
-    positionIndex: number;
-}
-
-interface Act {
-    value: string;
-    index: number;
-}
-
-export namespace slr1 {
+export namespace generator {
     export function exec(grammars: Grammar[]): Row[] {
         const nonTerminals: Literal[] = _.uniq(_.map(grammars, "nonTerminal"));
 

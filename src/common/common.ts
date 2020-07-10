@@ -16,6 +16,33 @@ export interface Grammar {
     elements: Literal[];
 }
 
+export const State = {
+    OK: "OK",
+    S: "S",
+    R: "R",
+};
+
+export interface Row {
+    value: Cell[];
+    row: CellValue | string;
+}
+
+export interface Cell {
+    value: any;
+    column: string;
+}
+
+export interface CellValue {
+    value: string;
+    grammarIndex: number;
+    positionIndex: number;
+}
+
+export interface Act {
+    value: string;
+    index: number;
+}
+
 export type LiteralOptions = Set<LiteralOption>;
 
 export interface LiteralToken {
