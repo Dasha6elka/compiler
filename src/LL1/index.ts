@@ -5,7 +5,22 @@ import { analyzer } from "./analyzer";
 import { lexer } from "../lexer";
 import fs from "fs";
 
-const inputString = "-(-i+0.32*a1)*-i⊥";
+// <Z>-><S> ⊥
+// <S>-><T> <A0>
+// <A0>->+ <T> <A0>
+// <A0>->e
+// <T>-><A> <B0>
+// <B0>->* <A> <B0>
+// <B0>->e
+// <A>->- <A>
+// <A>->( <S> )
+// <A>->55
+// <A>->identification
+// <A>->5.5
+// <A>->0xABC
+
+
+const inputString = "-5+-(-5.5)+(5+5)+-c3⊥";
 
 function main() {
     let tokensLexer: string[] = [];
@@ -15,7 +30,7 @@ function main() {
     input = parser.leftRecursion(input);
     input = parser.factorization(input);
     const options = parser.optionize(input);
-    const table = parser.parse(input);
+    const table = parser.parse(input, options);
     set.exec(table, options, input); // построение направляющего множества
     const rules = parser.rules(options);
     const grammars = parser.grammars(input, table);

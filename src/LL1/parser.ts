@@ -261,7 +261,7 @@ export namespace parser {
         return grammars;
     }
 
-    export function parse(input: string): LiteralTable {
+    export function parse(input: string, options: LiteralOptions): LiteralTable {
         const transitionsMap = transitionize(input);
 
         const cache = factory.createLiteralTable();
@@ -291,8 +291,30 @@ export namespace parser {
                         }
                     });
                 } else {
-                    cacheSafePush(nonTerminalMatch, END);
-                    tableSafePush(nonTerminalMatch, new Set([END]));
+                    let tokens: string[] = [];
+                    options.forEach(option => {
+                        let index = 0;
+                        option.grammar.forEach((gramm, unused, array) => {
+                            const isLast = index++ === array.size - 1;
+                            if (gramm === nonTerminalMatch && isLast && option.rule !== gramm) {
+                                tokens.push(option.rule);
+                            }
+                        });
+                    });
+                    const values: string[] = [];
+                    options.forEach(option => {
+                        let index = 0;
+                        option.grammar.forEach((gramm, unused, array) => {
+                            const next = Array.from(array.values())[++index];
+                            tokens.forEach(token => {
+                                if (gramm === token && next) {
+                                    values.push(next);
+                                }
+                            });
+                        });
+                    });
+                    cacheSafePush(nonTerminalMatch, new Set([...values, END]));
+                    tableSafePush(nonTerminalMatch, new Set([...values, END]));
                 }
             } else {
                 const symbol: string = rightPartMatch.split(" ")[0];

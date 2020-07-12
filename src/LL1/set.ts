@@ -7,11 +7,15 @@ export namespace set {
     export function exec(table: LiteralTable, options: LiteralOptions, input: string): void {
         const { terminals, nonTerminals } = tokenize(input);
 
+        let sameToken: string = "";
+        let sameFirstRightPart: string[] = [];
         options.forEach(option => {
             const literals = table.get(option.rule);
 
             let firstGrammarLiteral = Array.from(option.grammar.values())[0];
             if (literals?.has(firstGrammarLiteral)) {
+                sameToken = option.rule;
+                sameFirstRightPart.push(firstGrammarLiteral);
                 const list: string[] = [];
                 while (nonTerminals.has(firstGrammarLiteral)) {
                     const literals = table.get(firstGrammarLiteral);
@@ -35,7 +39,20 @@ export namespace set {
                 option.first.add(END);
                 for (const [key, values] of table) {
                     if (option.rule === key) {
-                        values.forEach(value => option.first.add(value));
+                        values.forEach(value => {
+                            if (sameToken === option.rule && sameFirstRightPart.includes(value)) {
+                                sameFirstRightPart = [];
+                                return;
+                            }
+                            if (nonTerminals.has(value)) {
+                                const values = table.get(value);
+                                values?.forEach(value => {
+                                    option.first.add(value);
+                                });
+                            } else {
+                                option.first.add(value);
+                            }
+                        });
                     }
                 }
             }

@@ -11,6 +11,7 @@ import {
 import { exceptions } from "./exceptions";
 import { factory } from "../common/factory";
 import { lexer } from "../lexer";
+import { END } from "../common/constants";
 
 export namespace generator {
     export function exec(rules: RuleValue[], grammars: GrammarValue[], tokensLexer: string[]): TokenTable {
@@ -177,10 +178,10 @@ export namespace generator {
         const first: Set<Literal> = new Set<Literal>();
         let rule = "";
 
-        let tokens:string[] = [];
+        let tokens: string[] = [];
         thisFirst.forEach(token => {
             tokens.push(token);
-        })
+        });
 
         const tokensInput = getTokens(tokens);
 
@@ -191,6 +192,10 @@ export namespace generator {
                 first.add(rule);
             }
         });
+
+        if (tokens.includes(END)) {
+            first.add("END");
+        }
 
         return first;
     }
