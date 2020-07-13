@@ -27,8 +27,6 @@ describe("generator", () => {
         const transitions = new Map<Literal, Literal>();
         transitions.set(TERMINALS.A, TERMINALS.S);
 
-        const table = parser.parse(input);
-
         const options = new Set<LiteralOption>();
         options.add({
             rule: TERMINALS.S,
@@ -50,6 +48,9 @@ describe("generator", () => {
             grammar: factory.createLiteralSet([NON_TERMINALS.e]),
             first: factory.createLiteralSet([]),
         });
+
+
+        const table = parser.parse(input, options);
 
         it("should return rule with set", () => {
             set.exec(table, options, input);
@@ -73,7 +74,7 @@ describe("generator", () => {
             expected.add({
                 rule: TERMINALS.A,
                 grammar: factory.createLiteralSet([NON_TERMINALS.e]),
-                first: factory.createLiteralSet([END, NON_TERMINALS.c, NON_TERMINALS.a, NON_TERMINALS.b]),
+                first: factory.createLiteralSet([END, NON_TERMINALS.a, NON_TERMINALS.b]),
             });
 
             Array.from(expected.values()).forEach((expectedValue, index) => {

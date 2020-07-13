@@ -106,6 +106,13 @@ export namespace analyzer {
                 while (nullStackPointer) {
                     const head = stack.pop();
                     top = table.get(head!);
+
+                    if (top?.stack) {
+                        const array = Array.from(table.entries());
+                        const [index] = array.find(([, token]) => token === top)!;
+                        stack.push(index + 1);
+                    }
+
                     nullStackPointer = first === "END" && top?.first.has(first) ? false : !top?.pointer;
                     if (first && top?.first.has(first) && top?.offset) {
                         const it = seq.next();

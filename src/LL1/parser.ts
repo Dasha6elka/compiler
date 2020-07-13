@@ -50,7 +50,7 @@ export namespace parser {
         return transitions;
     }
 
-    export function factorization(input: string): string {
+    export function factorization(input: string, alphabetIndex: number, letterIndex: number): string {
         const lines = utils.Input.normalize(input);
 
         const matches = new Map<string, Set<string[]>>();
@@ -77,14 +77,18 @@ export namespace parser {
 
         let result = "";
 
-        result = addInResultMatches(matches, matchesKey, result);
+        result = addInResultMatches(matches, matchesKey, result, alphabetIndex, letterIndex);
 
         result = addInResultSimples(simples, simplesKey, result);
 
         return result;
     }
 
-    export function leftRecursion(input: string): string {
+    export function leftRecursion(
+        input: string,
+        alphabetIndex: number,
+        letterIndex: number,
+    ): { result: string; alphabetIndex: number; letterIndex: number } {
         const lines = utils.Input.normalize(input);
         const tokensMap = new Map<Literal, Set<string[]>>();
         const recursionKey: string[] = [];
@@ -107,15 +111,20 @@ export namespace parser {
         });
 
         if (!isLeftRecursiveness(input, tokensMap)) {
-            return "Grammar is not LL (1), parsing table cannot be built";
+            return {
+                result: "Grammar is not LL (1), parsing table cannot be built",
+                alphabetIndex,
+                letterIndex,
+            };
         }
-
-        let alphabetIndex = 0,
-            letterIndex = 0;
 
         const result = addInResult(tokensMap, recursionKey, alphabetIndex, letterIndex);
 
-        return result;
+        return {
+            result: result.result,
+            alphabetIndex: result.alphabetIndex,
+            letterIndex: result.letterIndex,
+        };
     }
 
     function isLeftRecursiveness(input: string, tokensMap: Map<Literal, Set<Literal[]>>): boolean {
@@ -282,40 +291,44 @@ export namespace parser {
                 tableSafePush(nonTerminalMatch, rightPartMatch);
             } else if (rightPartMatch[0] === EMPTY) {
                 const transitions = transitionsMap.get(nonTerminalMatch);
+                const values: string[] = [];
                 if (transitions) {
                     transitions?.forEach(transition => {
-                        const values = cache.get(transition);
-                        if (values) {
-                            cacheSafePush(nonTerminalMatch, values);
-                            tableSafePush(nonTerminalMatch, new Set([...values, END]));
+                        const vals = cache.get(transition);
+                        if (vals) {
+                            vals.forEach(value => {
+                                values.push(value);
+                            });
                         }
                     });
-                } else {
-                    let tokens: string[] = [];
-                    options.forEach(option => {
-                        let index = 0;
-                        option.grammar.forEach((gramm, unused, array) => {
-                            const isLast = index++ === array.size - 1;
-                            if (gramm === nonTerminalMatch && isLast && option.rule !== gramm) {
-                                tokens.push(option.rule);
+                }
+                let tokens: string[] = [];
+                options.forEach(option => {
+                    let index = 0;
+                    option.grammar.forEach((gramm, unused, array) => {
+                        const isLast = index++ === array.size - 1;
+                        if (gramm === nonTerminalMatch && isLast && option.rule !== gramm) {
+                            tokens.push(option.rule);
+                        }
+                        if (gramm === nonTerminalMatch && !isLast) {
+                            const next = Array.from(array.values())[index];
+                            values.push(next);
+                        }
+                    });
+                });
+                options.forEach(option => {
+                    let index = 0;
+                    option.grammar.forEach((gramm, unused, array) => {
+                        const next = Array.from(array.values())[++index];
+                        tokens.forEach(token => {
+                            if (gramm === token && next) {
+                                values.push(next);
                             }
                         });
                     });
-                    const values: string[] = [];
-                    options.forEach(option => {
-                        let index = 0;
-                        option.grammar.forEach((gramm, unused, array) => {
-                            const next = Array.from(array.values())[++index];
-                            tokens.forEach(token => {
-                                if (gramm === token && next) {
-                                    values.push(next);
-                                }
-                            });
-                        });
-                    });
-                    cacheSafePush(nonTerminalMatch, new Set([...values, END]));
-                    tableSafePush(nonTerminalMatch, new Set([...values, END]));
-                }
+                });
+                cacheSafePush(nonTerminalMatch, new Set([...values]));
+                tableSafePush(nonTerminalMatch, new Set([...values]));
             } else {
                 const symbol: string = rightPartMatch.split(" ")[0];
                 cacheSafePush(nonTerminalMatch, symbol);
@@ -371,17 +384,22 @@ export namespace parser {
         if (stack[0] === subStack[0] && stack[0] != EMPTY) {
             match += `${stack[0]} `;
             let i = 1;
-            while (stack[i] === subStack[i]) {
-                if (stack[i] === "undefined" || subStack[i] === "undefined") {
-                    return;
+            while (stack[i] === subStack[i] && stack.length > i) {
+                const s = stack[i];
+                const b = subStack[i];
+                if (s !== undefined && b !== undefined) {
+                    match += `${stack[i]} `;
+                    i++;
                 }
-                match += `${stack[i]} `;
-                i++;
             }
             const stackSlice = stack.slice(i);
             const subStackSlice = subStack.slice(i);
-            arrayPush(stackSlice, otherPart);
-            arrayPush(subStackSlice, otherPart);
+            if (stackSlice.length === 0 && subStackSlice.length === 0) {
+                arrayPush(stackSlice, otherPart);
+            } else {
+                arrayPush(stackSlice, otherPart);
+                arrayPush(subStackSlice, otherPart);
+            }
 
             if (matches.has(match)) {
                 let matchValues = matches.get(match)!;
@@ -404,11 +422,15 @@ export namespace parser {
         }
     }
 
-    function addInResultMatches(matches: Map<Literal, Set<Literal[]>>, matchesKey: Literal[], result: string): string {
+    function addInResultMatches(
+        matches: Map<Literal, Set<Literal[]>>,
+        matchesKey: Literal[],
+        result: string,
+        alphabetIndex: number,
+        letterIndex: number,
+    ): string {
         const keys = matches.keys();
-        let alphabetIndex = 0,
-            letterIndex = 0,
-            matchIndex = 0;
+        let matchIndex = 0;
 
         matches.forEach(matchValues => {
             const letter = `${ARR_EN[alphabetIndex]}${letterIndex}`;
@@ -430,7 +452,7 @@ export namespace parser {
         recursionKey: string[],
         alphabetIndex: number,
         letterIndex: number,
-    ): string {
+    ): { result: string; alphabetIndex: number; letterIndex: number } {
         let result = "";
         for (const [key, values] of tokensMap) {
             if (recursionKey.includes(key)) {
@@ -441,6 +463,8 @@ export namespace parser {
                 values.forEach(value => {
                     if (key === value[0]) {
                         recursion += `<${letter}>->${value.slice(1).join(" ").trim()}<${letter}>` + "\n";
+                    } else if (value.includes(EMPTY)) {
+                        return;
                     } else {
                         simples += `${key}->${value.join(" ").trim()}<${letter}>` + "\n";
                     }
@@ -457,7 +481,11 @@ export namespace parser {
                 values.forEach(value => (result += `${key}->${value.join(" ")}`.trim() + "\n"));
             }
         }
-        return result;
+        return {
+            result,
+            alphabetIndex,
+            letterIndex,
+        };
     }
 
     function addInResultSimples(simples: Set<Literal[]>, simplesKey: Literal[], result: string): string {

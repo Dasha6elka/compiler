@@ -64,7 +64,7 @@ describe("parser", () => {
 <A>->a x<F>
 `;
 
-        const actual = parser.factorization(input);
+        const actual = parser.factorization(input, 0, 0);
         const expected = `<A>-><B> <C>
 <A>-><D> <B>
 <A>->a x <F>
@@ -82,7 +82,7 @@ describe("parser", () => {
 <A>->a x z
 `;
 
-        const actual = parser.factorization(input);
+        const actual = parser.factorization(input, 0, 0);
         const expected = `<A>-><B> <C> <A0>
 <A0>->e
 <A0>-><D>
@@ -104,7 +104,7 @@ describe("parser", () => {
 <A>->z a x
 `;
 
-        const actual = parser.factorization(input);
+        const actual = parser.factorization(input, 0, 0);
         const expected = `<A>-><B> <C>
 <A>-><D> <B> <C>
 <A>-><F> a x
@@ -124,7 +124,7 @@ describe("parser", () => {
 <A>->a x z
 `;
 
-        const actual = parser.factorization(input);
+        const actual = parser.factorization(input, 0, 0);
         const expected = `<A>->a x <A0>
 <A0>-><F>
 <A0>->y
@@ -145,7 +145,7 @@ describe("parser", () => {
 <A>->a z
 `;
 
-        const actual = parser.factorization(input);
+        const actual = parser.factorization(input, 0, 0);
         const expected = `<A>-><B> <A0>
 <A0>-><C>
 <A0>-><D>
@@ -166,7 +166,7 @@ describe("parser", () => {
 <F>->m
 `;
 
-        const actual = parser.factorization(input);
+        const actual = parser.factorization(input, 0, 0);
         const expected = `<A>->a x <A0>
 <A0>-><F> ⊥
 <A0>->y
@@ -191,7 +191,7 @@ describe("parser", () => {
 <A>->identification
 `;
 
-        const actual = parser.factorization(input);
+        const actual = parser.factorization(input, 0, 0);
         const expected = `<Z>-><S> ⊥
 <S>-><T> <A0>
 <A0>->+ <A> <A0>
@@ -214,13 +214,13 @@ describe("parser", () => {
 <A>->5
 `;
 
-        const actual = parser.leftRecursion(input);
+        const actual = parser.leftRecursion(input, 0, 0);
         const expected = `<A>->5<A0>
 <A0>->+ 5<A0>
 <A0>->e
 `;
 
-        expect(actual).toEqual(expected);
+        expect(actual.result).toEqual(expected);
     });
 
     describe("left resursion not space", () => {
@@ -230,14 +230,14 @@ describe("parser", () => {
 <F>->m
 `;
 
-        const actual = parser.leftRecursion(input);
+        const actual = parser.leftRecursion(input, 0, 0);
         const expected = `<A>->y<A0>
 <A0>->x <F><A0>
 <A0>->e
 <F>->m
 `;
 
-        expect(actual).toEqual(expected);
+        expect(actual.result).toEqual(expected);
     });
 
     describe("left resursion hard", () => {
@@ -249,7 +249,7 @@ describe("parser", () => {
 <A>->i
 `;
 
-        const actual = parser.leftRecursion(input);
+        const actual = parser.leftRecursion(input, 0, 0);
         const expected = `<S>->5<A0>
 <A0>->+ <A><A0>
 <A0>->* <A><A0>
@@ -258,7 +258,7 @@ describe("parser", () => {
 <A>->i
 `;
 
-        expect(actual).toEqual(expected);
+        expect(actual.result).toEqual(expected);
     });
     describe("left resursion hardest", () => {
         const input = `
@@ -270,7 +270,7 @@ describe("parser", () => {
 <A>->i
 `;
 
-        const actual = parser.leftRecursion(input);
+        const actual = parser.leftRecursion(input, 0, 0);
         const expected = `<Z>-><S> ⊥
 <S>->5<A0>
 <A0>->+ <A><A0>
@@ -280,7 +280,7 @@ describe("parser", () => {
 <A>->i
 `;
 
-        expect(actual).toEqual(expected);
+        expect(actual.result).toEqual(expected);
     });
 
     describe("left resursion hardest", () => {
@@ -295,7 +295,7 @@ describe("parser", () => {
 <A>->identification
 `;
 
-        const actual = parser.leftRecursion(input);
+        const actual = parser.leftRecursion(input, 0, 0);
         const expected = `<Z>-><S> ⊥
 <S>-><T><A0>
 <A0>->+ <A><A0>
@@ -309,7 +309,7 @@ describe("parser", () => {
 <A>->identification
 `;
 
-        expect(actual).toEqual(expected);
+        expect(actual.result).toEqual(expected);
     });
 
     describe("not LL(1)", () => {
@@ -320,9 +320,9 @@ describe("parser", () => {
 <A>->a
 `;
 
-        const actual = parser.leftRecursion(input);
+        const actual = parser.leftRecursion(input, 0, 0);
         const expected = "Grammar is not LL (1), parsing table cannot be built";
 
-        expect(actual).toEqual(expected);
+        expect(actual.result).toEqual(expected);
     });
 });

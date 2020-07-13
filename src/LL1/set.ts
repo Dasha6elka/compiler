@@ -15,21 +15,9 @@ export namespace set {
             let firstGrammarLiteral = Array.from(option.grammar.values())[0];
             if (literals?.has(firstGrammarLiteral)) {
                 sameToken = option.rule;
-                sameFirstRightPart.push(firstGrammarLiteral);
+                sameFirstRightPart = [firstGrammarLiteral];
                 const list: string[] = [];
-                while (nonTerminals.has(firstGrammarLiteral)) {
-                    const literals = table.get(firstGrammarLiteral);
-                    literals?.forEach(literal => {
-                        if (terminals.has(literal)) {
-                            list.push(literal);
-                        }
-                        firstGrammarLiteral = literal;
-                    });
-                }
-
-                if (terminals.has(firstGrammarLiteral)) {
-                    list.push(firstGrammarLiteral);
-                }
+                getTerminals(nonTerminals, firstGrammarLiteral, table, terminals, list);
 
                 list.forEach(item => {
                     option.first.add(item);
@@ -44,14 +32,7 @@ export namespace set {
                                 sameFirstRightPart = [];
                                 return;
                             }
-                            if (nonTerminals.has(value)) {
-                                const values = table.get(value);
-                                values?.forEach(value => {
-                                    option.first.add(value);
-                                });
-                            } else {
-                                option.first.add(value);
-                            }
+                            rec(nonTerminals, value, table, option.first);
                         });
                     }
                 }
@@ -68,6 +49,27 @@ export namespace set {
         for (const [key, values] of table) {
             const onlyTerminals = Array.from(values).filter(value => terminals.has(value) || value === END);
             table.set(key, factory.createLiteralSet(onlyTerminals));
+        }
+    }
+
+    function getTerminals(
+        nonTerminals: LiteralSet,
+        firstGrammarLiteral: string,
+        table: LiteralTable,
+        terminals: LiteralSet,
+        list: string[],
+    ) {
+        if (nonTerminals.has(firstGrammarLiteral)) {
+            const literals = table.get(firstGrammarLiteral);
+            literals?.forEach(literal => {
+                if (terminals.has(literal)) {
+                    list.push(literal);
+                } else {
+                    getTerminals(nonTerminals, literal, table, terminals, list);
+                }
+            });
+        } else {
+            list.push(firstGrammarLiteral);
         }
     }
 
