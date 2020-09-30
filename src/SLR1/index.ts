@@ -1,23 +1,82 @@
-import { lexer } from "../lexer";
 import fs from "fs";
 import { parser } from "./parser";
 import { generator } from "./generator";
 import { analyzer } from "./analyzer";
 import { Grammars, Row } from "../common/common";
-import { END } from "../common/constants";
+import { Lexer } from "lexer4js";
 
-const inputString = "-(-i+0.32*a1)*-i⊥";
-const inputArray: string[] = ["real", "A", END];
+/*
+<Z>-><S>
+<S>-><S>+<T>
+<S>-><T>
+<S>->e
+<T>-><T>*<A>
+<T>-><A>
+<A>->-<A>
+<A>->(<S>)
+<A>->55
+<A>->identification
+<A>->5.5
+<A>->0xABC
+
+<Z>-><S>
+<S>-><S>a
+<S>->e
+
+<S>->real<idlist>
+<idlist>-><idlist>,<id>
+<idlist>-><id>
+<id>->A
+
+<E>-><T>+<T>
+<T>-><F>*<F>
+<F>->(<F>)
+<F>->id
+<F>->5
+
+<E>-><E>+<T>
+<E>-><T>
+<T>-><T>*<F>
+<T>-><F>
+<F>->-<F>
+<F>->(<E>)
+<F>->id
+<F>->5
+
+<S>-><A><B><C>
+<A>-><A>a
+<A>->4
+<B>-><B>b
+<B>->+
+<C>-><C>c
+<C>->6
+
+<S>-><A><B><C>
+<A>->a
+<A>->4
+<B>->b
+<B>->+
+<C>->c
+<C>->5
+
+*/
+
+const inputString: string = "-3.5+(-3*5+7+8)+a";
 
 function main() {
-    let tokensLexer: string[] = [];
-    tokensLexer = lexer.main("./lexer.txt", tokensLexer);
+    const lexer = new Lexer();
+    const source = fs.readFileSync("./lexer.txt", "utf8");
+    const tokensInput = lexer.tokenize(source);
 
     let input = fs.readFileSync("./inputSLR.txt", "utf-8").trim();
     const set: Grammars = parser.exec(input);
-    const table: Row[] = generator.exec(set);
-    const result = analyzer.exec(table, inputArray, set);
+    const table: Row[] = generator.exec(set, tokensInput);
+    const result = analyzer.exec(table, [inputString], set, tokensInput);
     console.log(result);
 }
 
-main();
+try {
+    main();
+} catch (error) {
+    console.error(error);
+}

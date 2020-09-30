@@ -1,6 +1,8 @@
-import { Row, Act, Grammar, State, CellValue } from "../common/common";
+import _ from "lodash";
+import { Row, Grammar, State, Literal } from "../common/common";
 import { exceptions } from "./exceptions";
-import { END } from "../common/constants";
+import { Lexer, Token } from "lexer4js";
+import { EMPTY, END } from "../common/constants";
 
 export namespace analyzer {
     type ExecError = exceptions.analyzer.IncorrectSequenceOrderException;
@@ -10,122 +12,138 @@ export namespace analyzer {
         error: ExecError | null;
     }
 
-    export function exec(rows: Row[], input: string[], grammars: Grammar[]): ExecResult {
-        const stack: string[] = [];
-        const rowStack: any[] = [];
+    export interface ExecResultFailed extends ExecResult {
+        ok: boolean;
+        error: ExecError | null;
+        token: string;
+        line: string;
+        position: string;
+    }
 
-        let i: number = 0;
-        let symbol: string = input[i];
-        stack.push(symbol);
+    export function exec(rows: Row[], input: string[], grammars: Grammar[], tokensLexer: Token[]): ExecResult {
+        const nonTerminals: Literal[] = _.uniq(_.map(grammars, "nonTerminal"));
 
-        let state: Act = {
-            value: State.OK,
+        const tokensStack: any[] = [];
+        const inputStack: any[] = [];
+        const statesStack: any[] = [];
+        statesStack.push({
+            value: State.S,
             index: 0,
-        };
-
-        rowStack.push(rows[0].row);
-
-        let isError = true;
-        rows[0].value.forEach(cell => {
-            if (cell.column === symbol) {
-                state = cell.value;
-                isError = false;
-
-                if (input[i + 1] === undefined) {
-                    return;
-                }
-
-                symbol = input[++i];
-                if (symbol === undefined) {
-                    return;
-                }
-
-                if (symbol === END) {
-                    end = true;
-                } else {
-                    stack.push(symbol);
-                }
-            }
         });
 
-        if (isError) {
-            const result: ExecResult = {
-                ok: false,
-                error: new exceptions.analyzer.IncorrectSequenceOrderException(),
-            };
+        const lexer = new Lexer();
+        const tokensInput = lexer
+            .tokenize(input[0])
+            .map(token => `${token.type} ${token.literal} ${token.line} ${token.position}`);
 
-            return result;
+        let offsetArray: string[] = getTokensSymbol(tokensInput, 0);
+        let linesArray: string[] = getTokensSymbol(tokensInput, 2);
+        let positionArray: string[] = getTokensSymbol(tokensInput, 3);
+
+        const grammarsArray: Grammar[] = [];
+
+        grammars.forEach(grammar => {
+            let toks: string[] = [];
+            grammar.rightPart.forEach(token => {
+                if (token === EMPTY) {
+                    return;
+                }
+                if (!nonTerminals.includes(token)) {
+                    const lexer = new Lexer();
+                    let tokInput = lexer.tokenize(token);
+
+                    tokensLexer.forEach(t => {
+                        if (token === t.literal && !toks.includes(t.type)) {
+                            toks.push(t.type);
+                        } else if (tokInput[0].type === t.type && !toks.includes(t.type)) {
+                            toks.push(t.type);
+                        }
+                    });
+                } else {
+                    toks.push(token);
+                }
+            });
+            grammarsArray.push({
+                nonTerminal: grammar.nonTerminal,
+                rightPart: toks,
+                elements: grammar.elements,
+            });
+        });
+
+        inputStack.push("END");
+        for (let j = tokensInput.length - 1; j >= 0; j--) {
+            const array = tokensInput[j].split(" ");
+            inputStack.push(array[0]);
         }
 
         let end = false;
+        let state = statesStack[statesStack.length - 1];
+        let i: number = 0;
 
         while (!end) {
             if (state.value === State.S) {
-                const nextRow = rows[state.index];
-                rowStack.push(nextRow.row);
+                const curr = inputStack[inputStack.length - 1];
+                const currRow = rows[state.index];
                 let isError = true;
-                nextRow.value.forEach(cell => {
-                    if (cell.column === symbol) {
+
+                currRow.value.forEach(cell => {
+                    if (cell.column === curr) {
                         state = cell.value;
+
+                        if (state === State.OK) {
+                            end = true;
+                            isError = false;
+                            return;
+                        }
+
+                        if (state.value !== State.R) {
+                            statesStack.push(state);
+                            inputStack.pop();
+                            tokensStack.push(curr);
+                            i++;
+                            isError = false;
+                            return;
+                        }
+
                         isError = false;
-
-                        if (input[i + 1] === undefined) {
-                            return;
-                        }
-
-                        symbol = input[++i];
-
-                        if (symbol === END) {
-                            return;
-                        } else {
-                            stack.push(symbol);
-                        }
                     }
                 });
                 if (isError) {
-                    const result: ExecResult = {
+                    const result: ExecResultFailed = {
                         ok: false,
                         error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+                        token: offsetArray[i - 1],
+                        line: linesArray[i - 1],
+                        position: positionArray[i - 1],
                     };
 
                     return result;
                 }
             } else if (state.value === State.R) {
-                const grammar = grammars[state.index];
-                const tokens: string[] = grammar.rightPart.reverse();
-                for (let j = 0; j < tokens.length; j++) {
-                    rowStack.pop();
+                const grammar = grammarsArray[state.index];
+                const rightPart: string[] = grammar.rightPart.reverse();
+                for (let j = 0, i = rightPart.length - 1; j < rightPart.length, i >= 0; j++, i--) {
+                    if (rightPart.length !== 0) {
+                        const token = tokensStack.pop();
+                        if (rightPart[j] !== token && rightPart[i] !== token) {
+                            const result: ExecResultFailed = {
+                                ok: false,
+                                error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+                                token: offsetArray[i - 1],
+                                line: linesArray[i - 1],
+                                position: positionArray[i - 1],
+                            };
 
-                    if (tokens[j] !== stack.pop()) {
-                        const result: ExecResult = {
-                            ok: false,
-                            error: new exceptions.analyzer.IncorrectSequenceOrderException(),
-                        };
-
-                        return result;
+                            return result;
+                        }
                     }
                 }
-                const lastRow = rowStack[rowStack.length - 1];
-                stack.push(grammar.nonTerminal);
 
-                rows.forEach(row => {
-                    if (row.row === lastRow) {
-                        row.value.forEach(value => {
-                            if (value.column === stack[stack.length - 1]) {
-                                if (value.value === State.OK) {
-                                    state.value = State.OK;
-                                    state.index = 0;
-                                } else {
-                                    state = value.value;
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-
-            if (state.value === State.OK) {
-                end = true;
+                inputStack.push(grammar.nonTerminal);
+                for (let j = 0; j < rightPart.length; j++) {
+                    statesStack.pop();
+                }
+                state = statesStack[statesStack.length - 1];
             }
         }
 
@@ -135,5 +153,16 @@ export namespace analyzer {
         };
 
         return result;
+    }
+
+    function getTokensSymbol(inputTokens: string[], position: number): string[] {
+        let tokensArray: string[] = [];
+
+        inputTokens.forEach(token => {
+            const array = token.split(" ");
+            tokensArray.push(array[position]);
+        });
+
+        return tokensArray;
     }
 }

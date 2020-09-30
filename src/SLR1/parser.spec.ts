@@ -24,12 +24,12 @@ describe("parser", () => {
             {
                 nonTerminal: LITERALS.IDLIST,
                 rightPart: [LITERALS.IDLIST, LITERALS.COMMA, LITERALS.ID],
-                elements: [LITERALS.IDLIST, LITERALS.ID, LITERALS.A],
+                elements: [LITERALS.IDLIST, LITERALS.A, LITERALS.ID],
             },
             {
                 nonTerminal: LITERALS.IDLIST,
                 rightPart: [LITERALS.ID],
-                elements: [LITERALS.ID, LITERALS.A],
+                elements: [LITERALS.A, LITERALS.ID],
             },
             {
                 nonTerminal: LITERALS.ID,
