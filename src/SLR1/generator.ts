@@ -69,13 +69,7 @@ export namespace generator {
                     const lexer = new Lexer();
                     const tokensInput = lexer.tokenize(val.column);
 
-                    tokensLexer.forEach(token => {
-                        if (val.column === token.literal) {
-                            val.column = token.type;
-                        } else if (tokensInput[0].type === token.type) {
-                            val.column = token.type;
-                        }
-                    });
+                    val.column = tokensInput[0].type;
                 }
             });
 
@@ -84,13 +78,7 @@ export namespace generator {
                     const lexer = new Lexer();
                     const tokensInput = lexer.tokenize(row.row.value);
 
-                    tokensLexer.forEach(token => {
-                        if (isCellValue(row.row) && row.row.value === token.literal) {
-                            row.row.value = token.type;
-                        } else if (isCellValue(row.row) && tokensInput[0].type === token.type) {
-                            row.row.value = token.type;
-                        }
-                    });
+                    row.row.value = tokensInput[0].type;
                 }
             }
         });
@@ -162,16 +150,27 @@ export namespace generator {
             positionIndex: 0,
         };
 
-        if (grammars[0].rightPart.length === 1) {
-            grammars.forEach((grammar, grammIndex) => {
-                if (grammar.nonTerminal === grammars[0].rightPart[0] && grammar.rightPart[0] === EMPTY) {
-                    pushStateR(END, grammIndex, cells);
-                }
-            });
-        }
+        let isEmpty = false;
+
+        grammars[0].rightPart.forEach((el, ind, array) => {
+            const next = array[ind + 1];
+
+            if (nonTerminals.includes(el)) {
+                grammars.forEach(grammar => {
+                    if (grammar.nonTerminal === el && grammar.rightPart[0] === EMPTY) {
+                        isEmpty = true;
+                        if (next === undefined && isEmpty) {
+                            pushStateR(END, 0, cells);
+                        }
+                    } else {
+                        isEmpty = false;
+                    }
+                });
+            }
+        });
 
         pushToken(value, 0, 0, stack, cells, tempStack);
-        getTokens(grammars, value, nonTerminals, stack, token, grammars[0], cells, tempStack);
+        getTokens(grammars, value, nonTerminals, stack, grammars[0], cells, tempStack);
 
         return {
             value: cells,
@@ -209,7 +208,7 @@ export namespace generator {
         });
         // если следующий элемент Нетерминал
         if (nonTerminals.includes(next)) {
-            getTokens(grammars, next, nonTerminals, stack, startToken, firstGrammar, cells, tempStack);
+            getTokens(grammars, next, nonTerminals, stack, firstGrammar, cells, tempStack);
         }
 
         // ищем first в правой части и добавляем следующий за ним
@@ -255,7 +254,6 @@ export namespace generator {
                 cells,
                 nonTerminals,
                 stack,
-                startToken,
                 tempStack,
                 nonTerminalsArray,
             );
@@ -277,7 +275,6 @@ export namespace generator {
         first: string,
         nonTerminals: string[],
         stack: Cell[],
-        startToken: CellValue,
         firstGrammar: Grammar,
         cells: Cell[],
         tempStack: Cell[],
@@ -295,17 +292,49 @@ export namespace generator {
                     return;
                 } else if (firstEl === EMPTY) {
                     firstGrammar.rightPart.forEach((cell, index, array) => {
-                        if (cell === first && startToken.value === array[index - 1]) {
+                        if (cell === first) {
                             const next = array[index + 1];
                             if (next !== undefined) {
                                 pushStateR(next, grammIndex, cells);
+                                if (nonTerminals.includes(next)) {
+                                    getRTokens(
+                                        grammars,
+                                        next,
+                                        nonTerminals,
+                                        stack,
+                                        firstGrammar,
+                                        cells,
+                                        tempStack,
+                                        grammIndex,
+                                    );
+                                }
+                            } else {
+                                const nonTerminalsArray: string[] = [];
+                                recForLastElement(
+                                    firstGrammar,
+                                    grammars,
+                                    grammIndex,
+                                    cells,
+                                    nonTerminals,
+                                    stack,
+                                    tempStack,
+                                    nonTerminalsArray,
+                                );
                             }
                         }
                     });
                     return;
                 } else if (nonTerminals.includes(firstEl)) {
                     pushToken(firstEl, grammIndex, positionIndex, stack, cells, tempStack);
-                    getTokens(grammars, firstEl, nonTerminals, stack, startToken, firstGrammar, cells, tempStack);
+                    getTokens(
+                        grammars,
+                        firstEl,
+                        nonTerminals,
+                        stack,
+                        firstGrammar,
+                        cells,
+                        tempStack,
+                    );
                 } else {
                     pushToken(firstEl, grammIndex, positionIndex, stack, cells, tempStack);
                 }
@@ -318,7 +347,6 @@ export namespace generator {
         first: string,
         nonTerminals: string[],
         stack: Cell[],
-        startToken: CellValue,
         firstGrammar: Grammar,
         cells: Cell[],
         tempStack: Cell[],
@@ -344,7 +372,6 @@ export namespace generator {
                         firstEl,
                         nonTerminals,
                         stack,
-                        startToken,
                         firstGrammar,
                         cells,
                         tempStack,
@@ -433,16 +460,22 @@ export namespace generator {
         cells: Cell[],
         nonTerminals: string[],
         stack: Cell[],
-        startToken: CellValue,
         tempStack: Cell[],
         nonTerminalsArray: string[],
     ) {
         const nonTerm = firstGrammar.nonTerminal;
+        if (nonTerm === grammars[0].nonTerminal) {
+            pushStateR(END, grammarIndex, cells);
+        }
+
         grammars.forEach(grammar => {
             grammar.rightPart.forEach((val, index, array) => {
                 const isLast = index === array.length - 1;
                 if (val === nonTerm) {
                     if (isLast) {
+                        if (grammars[0].rightPart.length === 1 && grammars[0].rightPart[0] === nonTerm) {
+                            pushStateR(END, grammarIndex, cells);
+                        }
                         if (!nonTerminalsArray.includes(nonTerm)) {
                             nonTerminalsArray.push(nonTerm);
                             recForLastElement(
@@ -452,7 +485,6 @@ export namespace generator {
                                 cells,
                                 nonTerminals,
                                 stack,
-                                startToken,
                                 tempStack,
                                 nonTerminalsArray,
                             );
@@ -461,13 +493,18 @@ export namespace generator {
                         const column = array[index + 1];
                         pushStateR(column, grammarIndex, cells);
 
+                        grammars.forEach((grammar, i) => {
+                            if (grammar.nonTerminal === column && grammar.rightPart[0] === EMPTY) {
+                                pushStateR(END, i, cells);
+                            }
+                        })
+
                         if (nonTerminals.includes(column)) {
                             getRTokens(
                                 grammars,
                                 column,
                                 nonTerminals,
                                 stack,
-                                startToken,
                                 firstGrammar,
                                 cells,
                                 tempStack,

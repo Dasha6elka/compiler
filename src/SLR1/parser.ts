@@ -34,15 +34,18 @@ export namespace parser {
     function getElements(grammars: Grammars, input: string): void {
         const { terminals, nonTerminals } = tokenize(input);
 
-        const emptyArray: string[] = [];
-
         grammars.forEach(grammar => {
             if (grammar.rightPart.includes(EMPTY)) {
                 grammars.forEach(gramm => {
                     gramm.rightPart.forEach((value, index, array) => {
                         const isLast = index === array.length - 1;
                         const isFirst = index === 0;
-                        if (value === grammar.nonTerminal && !isLast && isFirst) {
+                        if (
+                            value === grammar.nonTerminal &&
+                            !isLast &&
+                            isFirst &&
+                            grammar.elements.includes(array[index + 1])
+                        ) {
                             grammar.elements.push(array[index + 1]);
                         }
                     });
@@ -52,7 +55,11 @@ export namespace parser {
 
         grammars.forEach(grammar => {
             const first = grammar.rightPart[0];
-            rec(terminals, first, grammar, nonTerminals, grammars, emptyArray, "");
+            let next = "";
+            if (grammar.rightPart[1] !== undefined) {
+                next = grammar.rightPart[1];
+            }
+            rec(terminals, first, grammar, nonTerminals, grammars, next);
         });
 
         grammars.forEach(grammar => {
@@ -91,23 +98,27 @@ export namespace parser {
         grammar: Grammar,
         nonTerminals: LiteralSet,
         grammars: Grammars,
-        emptyArray: string[],
-        isSame: string,
+        next: string,
     ) {
         if (terminals.has(first) && first !== EMPTY) {
-            grammar.elements.push(first);
+            if (!grammar.elements.includes(first)) {
+                grammar.elements.push(first);
+            }
         }
         if (nonTerminals.has(first)) {
             const firstGrammars = getFirstGrammars(grammars, first);
 
             firstGrammars.forEach(gramm => {
                 if (gramm.rightPart[0] !== first) {
-                    rec(terminals, gramm.rightPart[0], grammar, nonTerminals, grammars, emptyArray, isSame);
+                    rec(terminals, gramm.rightPart[0], grammar, nonTerminals, grammars, next);
                 }
                 if (!grammar.elements.includes(first)) {
                     grammar.elements.push(first);
                 }
             });
+        }
+        if (first === EMPTY && !grammar.elements.includes(next) && next !== "") {
+            grammar.elements.push(next);
         }
     }
 

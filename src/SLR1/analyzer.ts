@@ -2,7 +2,7 @@ import _ from "lodash";
 import { Row, Grammar, State, Literal } from "../common/common";
 import { exceptions } from "./exceptions";
 import { Lexer, Token } from "lexer4js";
-import { EMPTY, END } from "../common/constants";
+import { EMPTY } from "../common/constants";
 
 export namespace analyzer {
     type ExecError = exceptions.analyzer.IncorrectSequenceOrderException;
@@ -20,7 +20,7 @@ export namespace analyzer {
         position: string;
     }
 
-    export function exec(rows: Row[], input: string[], grammars: Grammar[], tokensLexer: Token[]): ExecResult {
+    export function exec(rows: Row[], grammars: Grammar[], tokensLexer: Token[], source: string): ExecResult {
         const nonTerminals: Literal[] = _.uniq(_.map(grammars, "nonTerminal"));
 
         const tokensStack: any[] = [];
@@ -33,7 +33,7 @@ export namespace analyzer {
 
         const lexer = new Lexer();
         const tokensInput = lexer
-            .tokenize(input[0])
+            .tokenize(source)
             .map(token => `${token.type} ${token.literal} ${token.line} ${token.position}`);
 
         let offsetArray: string[] = getTokensSymbol(tokensInput, 0);

@@ -1,7 +1,6 @@
 import { Grammar } from "../common/common";
 import { generator } from "./generator";
 import { analyzer } from "./analyzer";
-import { END } from "../common/constants";
 import { Lexer } from "lexer4js";
 import fs from "fs";
 
@@ -50,9 +49,9 @@ describe("analyzer", () => {
         ];
         const rows = generator.exec(grammars, tokensLexer);
 
-        const input: string[] = ["real A"];
+        const input: string = "real A";
 
-        const result = analyzer.exec(rows, input, grammars, tokensLexer);
+        const result = analyzer.exec(rows, grammars, tokensLexer, input);
 
         expect(result).toMatchObject({
             ok: true,
@@ -85,9 +84,9 @@ describe("analyzer", () => {
         ];
         const rows = generator.exec(grammars, tokensLexer);
 
-        const input: string[] = ["a b c"];
+        const input: string = "a b c";
 
-        const result = analyzer.exec(rows, input, grammars, tokensLexer);
+        const result = analyzer.exec(rows, grammars, tokensLexer, input);
 
         expect(result).toMatchObject({
             ok: true,
