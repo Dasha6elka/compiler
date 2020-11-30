@@ -3,6 +3,7 @@ import { Row, Grammar, State, Literal } from "../common/common";
 import { exceptions } from "./exceptions";
 import { Lexer, Token } from "lexer4js";
 import { EMPTY } from "../common/constants";
+import { SymbolsTable } from "./symbolsTable";
 
 export namespace analyzer {
     type ExecError = exceptions.analyzer.IncorrectSequenceOrderException;
@@ -37,6 +38,7 @@ export namespace analyzer {
             .map(token => `${token.type} ${token.literal} ${token.line} ${token.position}`);
 
         let offsetArray: string[] = getTokensSymbol(tokensInput, 0);
+        let symbolsArray: string[] = getTokensSymbol(tokensInput, 1);
         let linesArray: string[] = getTokensSymbol(tokensInput, 2);
         let positionArray: string[] = getTokensSymbol(tokensInput, 3);
 
@@ -79,10 +81,32 @@ export namespace analyzer {
         let end = false;
         let state = statesStack[statesStack.length - 1];
         let i: number = 0;
+        let isParams = false;
+        let type = "";
+        const table = new SymbolsTable();
+        table.create();
 
         while (!end) {
             if (state.value === State.S) {
                 const curr = inputStack[inputStack.length - 1];
+                const symbol = symbolsArray[i];
+                const isType = curr === "INT" || curr === "DOUBLE" || curr === "BOOLEAN";
+
+                if (isType) {
+                    isParams = true;
+                    type = curr;
+                }
+
+                if (isParams && symbol === ";" && curr === "SEMICOLON") {
+                    isParams = false;
+                }
+
+                const a = table.isHas(symbol, type);
+
+                if (isParams && curr === "IDENTIFIER" && !isType && !a) {
+                    table.addSymbol(symbol, type)
+                }
+
                 const currRow = rows[state.index];
                 let isError = true;
 
@@ -100,7 +124,13 @@ export namespace analyzer {
                             statesStack.push(state);
                             inputStack.pop();
                             tokensStack.push(curr);
+
+                            if (nonTerminals.includes(curr)){
+                                i--;
+                            }
+
                             i++;
+
                             isError = false;
                             return;
                         }
@@ -108,13 +138,14 @@ export namespace analyzer {
                         isError = false;
                     }
                 });
+
                 if (isError) {
                     const result: ExecResultFailed = {
                         ok: false,
                         error: new exceptions.analyzer.IncorrectSequenceOrderException(),
-                        token: offsetArray[i - 1],
-                        line: linesArray[i - 1],
-                        position: positionArray[i - 1],
+                        token: offsetArray[i],
+                        line: linesArray[i],
+                        position: positionArray[i],
                     };
 
                     return result;
@@ -129,9 +160,9 @@ export namespace analyzer {
                             const result: ExecResultFailed = {
                                 ok: false,
                                 error: new exceptions.analyzer.IncorrectSequenceOrderException(),
-                                token: offsetArray[i - 1],
-                                line: linesArray[i - 1],
-                                position: positionArray[i - 1],
+                                token: offsetArray[i],
+                                line: linesArray[i],
+                                position: positionArray[i],
                             };
 
                             return result;
@@ -146,6 +177,8 @@ export namespace analyzer {
                 state = statesStack[statesStack.length - 1];
             }
         }
+
+        table.delete();
 
         const result: ExecResult = {
             ok: true,
