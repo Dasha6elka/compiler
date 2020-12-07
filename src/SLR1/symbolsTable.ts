@@ -21,8 +21,8 @@ export class SymbolsTable {
         this.table = [];
     }
 
-    info(name: string) {
-        this.table.find(x => x.name = name);
+    info(name: string): string{
+        return this.table.find(x => x.name = name)?.type!;
     }
 
     isHas(name: string, type: string): boolean {

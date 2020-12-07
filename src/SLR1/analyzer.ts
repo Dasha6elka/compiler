@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Row, Grammar, State, Literal } from "../common/common";
 import { exceptions } from "./exceptions";
-import { Lexer, Token } from "lexer4js";
+import { Lexer, Token, TokenType } from "lexer4js";
 import { EMPTY } from "../common/constants";
 import { SymbolsTable } from "./symbolsTable";
 
@@ -19,6 +19,11 @@ export namespace analyzer {
         token: string;
         line: string;
         position: string;
+    }
+
+    interface Number {
+        num: number;
+        typeNum: TokenType;
     }
 
     export function exec(rows: Row[], grammars: Grammar[], tokensLexer: Token[], source: string): ExecResult {
@@ -82,29 +87,56 @@ export namespace analyzer {
         let state = statesStack[statesStack.length - 1];
         let i: number = 0;
         let isParams = false;
+        let isExpression = false;
         let type = "";
         const table = new SymbolsTable();
         table.create();
+        let stack: string[] = [];
+        let prevSymbol = "";
+        let identifier = "";
+
+        let tokInput: Token[] = [];
+        let num: Number = {
+            num: 0,
+            typeNum: TokenType.INT,
+        };
 
         while (!end) {
             if (state.value === State.S) {
                 const curr = inputStack[inputStack.length - 1];
                 const symbol = symbolsArray[i];
                 const isType = curr === "INT" || curr === "DOUBLE" || curr === "BOOLEAN";
+                const isAssign = curr === "ASSIGNMENT";
 
                 if (isType) {
                     isParams = true;
-                    type = curr;
+                    if (curr === "INT") {
+                        type = "INT_LITERAL";
+                    } else if (curr === "DOUBLE") {
+                        type = "DOUBLE_LITERAL";
+                    } else {
+                        type = curr;
+                    }
                 }
 
-                if (isParams && symbol === ";" && curr === "SEMICOLON") {
-                    isParams = false;
+                if (isAssign) {
+                    identifier = prevSymbol;
+                    isExpression = true;
+                }
+
+                if (symbol === ";" && curr === "SEMICOLON") {
+                    if (isParams) {
+                        isParams = false;
+                    }
+                    if (isExpression) {
+                        isExpression = false;
+                    }
                 }
 
                 const a = table.isHas(symbol, type);
 
                 if (isParams && curr === "IDENTIFIER" && !isType && !a) {
-                    table.addSymbol(symbol, type)
+                    table.addSymbol(symbol, type);
                 }
 
                 const currRow = rows[state.index];
@@ -125,8 +157,20 @@ export namespace analyzer {
                             inputStack.pop();
                             tokensStack.push(curr);
 
-                            if (nonTerminals.includes(curr)){
+                            if (nonTerminals.includes(curr)) {
                                 i--;
+                            } else if (
+                                !nonTerminals.includes(curr) &&
+                                isExpression &&
+                                !isAssign &&
+                                (curr === "INT_LITERAL" ||
+                                    curr === "DOUBLE_LITERAL" ||
+                                    curr === "ADDITION" ||
+                                    curr === "DIVISION" ||
+                                    curr === "MULTIPLICATION" ||
+                                    curr === "SUBTRACTION")
+                            ) {
+                                stack.push(symbol);
                             }
 
                             i++;
@@ -138,6 +182,8 @@ export namespace analyzer {
                         isError = false;
                     }
                 });
+
+                prevSymbol = symbol;
 
                 if (isError) {
                     const result: ExecResultFailed = {
@@ -153,6 +199,55 @@ export namespace analyzer {
             } else if (state.value === State.R) {
                 const grammar = grammarsArray[state.index];
                 const rightPart: string[] = grammar.rightPart.reverse();
+
+                if (rightPart.includes("ADDITION")) {
+                    exp(stack, num, "ADDITION");
+                }
+
+                if (rightPart.includes("SUBTRACTION")) {
+                    if (rightPart.length === 2) {
+                        const number = stack.pop();
+                        const minus = stack.pop();
+                        if (minus === "-") {
+                            stack.push(`${minus}${number}`);
+                        } else {
+                            const realMinus = stack.pop();
+                            stack.push(`${realMinus}${minus}`);
+                            stack.push(number!);
+                        }
+                    } else {
+                        exp(stack, num, "SUBTRACTION");
+                    }
+                }
+
+                if (rightPart.includes("MULTIPLICATION")) {
+                    exp(stack, num, "MULTIPLICATION");
+                }
+
+                if (rightPart.includes("DIVISION")) {
+                    exp(stack, num, "DIVISION");
+                }
+
+                if (num) {
+                    const lexer = new Lexer();
+                    tokInput = lexer.tokenize(num.num.toString());
+                }
+
+                if (rightPart.includes("ASSIGNMENT")) {
+                    const typeId = table.info(identifier);
+                    if (!tokInput[0] || typeId !== num.typeNum || typeId !== tokInput[0].type) {
+                        const result: ExecResultFailed = {
+                            ok: false,
+                            error: new exceptions.analyzer.IncorrectSTypeException(),
+                            token: offsetArray[i],
+                            line: linesArray[i],
+                            position: positionArray[i],
+                        };
+
+                        return result;
+                    }
+                }
+
                 for (let j = 0, i = rightPart.length - 1; j < rightPart.length, i >= 0; j++, i--) {
                     if (rightPart.length !== 0) {
                         const token = tokensStack.pop();
@@ -197,5 +292,116 @@ export namespace analyzer {
         });
 
         return tokensArray;
+    }
+
+    function isInt(str: string): boolean {
+        return /^\+?(0|[1-9]\d*)$/.test(str);
+    }
+
+    function exp(stack: string[], num: Number, name: string): Number {
+        let second = stack.pop();
+        stack.pop();
+        let first = stack.pop();
+        if (second !== undefined && first !== undefined) {
+            if (first[0] === "-") {
+                first = first.replace("-", "");
+                if (second[0] === "-") {
+                    second = second.replace("-", "");
+                    if (isInt(second) && isInt(first)) {
+                        num.num =
+                            name === "ADDITION"
+                                ? -parseInt(first) - parseInt(second)
+                                : name === "MULTIPLICATION"
+                                ? -parseInt(first) * -parseInt(second)
+                                : name === "DIVISION"
+                                ? -parseInt(first) / -parseInt(second)
+                                : -parseInt(first) + parseInt(second);
+                        num.typeNum = TokenType.INT_LITERAL;
+                    } else {
+                        num.num =
+                            name === "ADDITION"
+                                ? -parseFloat(first) - parseFloat(second)
+                                : name === "MULTIPLICATION"
+                                ? -parseFloat(first) * -parseFloat(second)
+                                : name === "DIVISION"
+                                ? -parseFloat(first) / -parseFloat(second)
+                                : -parseFloat(first) + parseFloat(second);
+                        num.typeNum = TokenType.DOUBLE_LITERAL;
+                    }
+                } else {
+                    if (isInt(second) && isInt(first)) {
+                        num.num =
+                            name === "ADDITION"
+                                ? -parseInt(first) + parseInt(second)
+                                : name === "MULTIPLICATION"
+                                ? -parseInt(first) * parseInt(second)
+                                : name === "DIVISION"
+                                ? -parseInt(first) / parseInt(second)
+                                : -parseInt(first) - parseInt(second);
+                        num.typeNum = TokenType.INT_LITERAL;
+                    } else {
+                        num.num =
+                            name === "ADDITION"
+                                ? -parseFloat(first) + parseFloat(second)
+                                : name === "MULTIPLICATION"
+                                ? -parseFloat(first) * parseFloat(second)
+                                : name === "DIVISION"
+                                ? -parseFloat(first) / parseFloat(second)
+                                : -parseFloat(first) - parseFloat(second);
+                        num.typeNum = TokenType.DOUBLE_LITERAL;
+                    }
+                }
+                stack.push(num.num.toString());
+            } else if (second[0] === "-") {
+                second = second.replace("-", "");
+                if (isInt(second) && isInt(first)) {
+                    num.num =
+                        name == "ADDITION"
+                            ? parseInt(first) - parseInt(second)
+                            : name === "MULTIPLICATION"
+                            ? parseInt(first) * -parseInt(second)
+                            : name === "DIVISION"
+                            ? parseInt(first) / -parseInt(second)
+                            : parseInt(first) + parseInt(second);
+                    num.typeNum = TokenType.INT_LITERAL;
+                } else {
+                    num.num =
+                        name == "ADDITION"
+                            ? parseFloat(first) - parseFloat(second)
+                            : name === "MULTIPLICATION"
+                            ? parseFloat(first) * -parseFloat(second)
+                            : name === "DIVISION"
+                            ? parseFloat(first) / -parseFloat(second)
+                            : parseFloat(first) + parseFloat(second);
+                    num.typeNum = TokenType.DOUBLE_LITERAL;
+                }
+                stack.push(num.num.toString());
+            } else {
+                if (isInt(second) && isInt(first)) {
+                    num.num =
+                        name == "ADDITION"
+                            ? parseInt(first) + parseInt(second)
+                            : name === "MULTIPLICATION"
+                            ? parseInt(first) * parseInt(second)
+                            : name === "DIVISION"
+                            ? parseInt(first) / parseInt(second)
+                            : parseInt(first) - parseInt(second);
+                    num.typeNum = TokenType.INT_LITERAL;
+                } else {
+                    num.num =
+                        name == "ADDITION"
+                            ? parseFloat(first) + parseFloat(second)
+                            : name === "MULTIPLICATION"
+                            ? parseFloat(first) * parseFloat(second)
+                            : name === "DIVISION"
+                            ? parseFloat(first) / parseFloat(second)
+                            : parseFloat(first) - parseFloat(second);
+                    num.typeNum = TokenType.DOUBLE_LITERAL;
+                }
+                stack.push(num.num.toString());
+            }
+        }
+
+        return num;
     }
 }
