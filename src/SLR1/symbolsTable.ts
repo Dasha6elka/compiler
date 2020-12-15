@@ -1,6 +1,7 @@
 export interface Symbol {
     name: string;
     type: string; // int double boolean
+    value: string | undefined;
 }
 
 export class SymbolsTable {
@@ -10,10 +11,19 @@ export class SymbolsTable {
         return this.table;
     }
 
-    addSymbol(name: string, type: string) {
+    addSymbol(name: string, type: string, value: string | undefined) {
         this.table.push({
             name,
             type,
+            value,
+        });
+    }
+
+    update(name: string, value: string | undefined) {
+        this.table.map(row => {
+            if (row.name === name) {
+                row.value = value;
+            }
         });
     }
 
@@ -21,8 +31,12 @@ export class SymbolsTable {
         this.table = [];
     }
 
-    info(name: string): string{
-        return this.table.find(x => x.name = name)?.type!;
+    getType(name: string): string {
+        return this.table.find(x => (x.name === name))?.type!;
+    }
+
+    getValue(name: string): string {
+        return this.table.find(x => (x.name === name))?.value!;
     }
 
     isHas(name: string, type: string): boolean {
@@ -31,7 +45,7 @@ export class SymbolsTable {
             if (row.name === name && row.type === type) {
                 same = true;
             }
-        })
+        });
 
         return same;
     }

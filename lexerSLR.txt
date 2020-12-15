@@ -1,3 +1,9 @@
-double a;
+int a;
+double b;
 
-a = 5 + 3 * 3 - 4 / -2;
+a = 20;
+b = 10.2;
+
+if (a == 10) {
+    a = b;
+};

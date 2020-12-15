@@ -88,6 +88,7 @@ export namespace analyzer {
         let i: number = 0;
         let isParams = false;
         let isExpression = false;
+        let isCondition = false;
         let type = "";
         const table = new SymbolsTable();
         table.create();
@@ -133,10 +134,18 @@ export namespace analyzer {
                     }
                 }
 
+                if (prevSymbol === "if" && symbol === "(") {
+                    isCondition = true;
+                }
+
+                if (isCondition && symbol === ")") {
+                    isCondition = false;
+                }
+
                 const a = table.isHas(symbol, type);
 
                 if (isParams && curr === "IDENTIFIER" && !isType && !a) {
-                    table.addSymbol(symbol, type);
+                    table.addSymbol(symbol, type, undefined);
                 }
 
                 const currRow = rows[state.index];
@@ -159,18 +168,33 @@ export namespace analyzer {
 
                             if (nonTerminals.includes(curr)) {
                                 i--;
-                            } else if (
-                                !nonTerminals.includes(curr) &&
-                                isExpression &&
-                                !isAssign &&
-                                (curr === "INT_LITERAL" ||
+                            } else if (!nonTerminals.includes(curr) && (isExpression || isCondition) && !isAssign) {
+                                if (
+                                    curr === "INT_LITERAL" ||
                                     curr === "DOUBLE_LITERAL" ||
                                     curr === "ADDITION" ||
                                     curr === "DIVISION" ||
                                     curr === "MULTIPLICATION" ||
-                                    curr === "SUBTRACTION")
-                            ) {
-                                stack.push(symbol);
+                                    curr === "SUBTRACTION"
+                                ) {
+                                    stack.push(symbol);
+                                } else if (curr === "IDENTIFIER") {
+                                    const valueId = table.getValue(symbol);
+
+                                    if (valueId !== undefined) {
+                                        stack.push(valueId);
+                                    } else {
+                                        const result: ExecResultFailed = {
+                                            ok: false,
+                                            error: new exceptions.analyzer.IncorrectUseUnassignedVariable(),
+                                            token: offsetArray[i],
+                                            line: linesArray[i],
+                                            position: positionArray[i],
+                                        };
+
+                                        return result;
+                                    }
+                                }
                             }
 
                             i++;
@@ -200,8 +224,36 @@ export namespace analyzer {
                 const grammar = grammarsArray[state.index];
                 const rightPart: string[] = grammar.rightPart.reverse();
 
+                if (rightPart.includes("EQUALS")) {
+                    const right = stack.pop()!;
+                    const left = stack.pop()!;
+
+                    let tokRight = new Lexer().tokenize(right);
+                    let tokLeft = new Lexer().tokenize(left);
+
+                    if (
+                        (!tokRight[0] && !tokLeft[0]) ||
+                        (tokRight[0].type !== tokLeft[0].type &&
+                            tokRight[0].type !== "INT_LITERAL" &&
+                            tokLeft[0].type !== "INT_LITERAL" &&
+                            tokRight[0].type !== "DOUBLE_LITERAL" &&
+                            tokLeft[0].type !== "DOUBLE_LITERAL")
+                    ) {
+                        const result: ExecResultFailed = {
+                            ok: false,
+                            error: new exceptions.analyzer.IncorrectTypeException(),
+                            token: offsetArray[i],
+                            line: linesArray[i],
+                            position: positionArray[i],
+                        };
+
+                        return result;
+                    }
+                }
+
                 if (rightPart.includes("ADDITION")) {
-                    exp(stack, num, "ADDITION");
+                    let second = stack.pop()!;
+                    exp(stack, num, "ADDITION", second);
                 }
 
                 if (rightPart.includes("SUBTRACTION")) {
@@ -216,35 +268,66 @@ export namespace analyzer {
                             stack.push(number!);
                         }
                     } else {
-                        exp(stack, num, "SUBTRACTION");
+                        let second = stack.pop()!;
+                        exp(stack, num, "SUBTRACTION", second);
                     }
                 }
 
                 if (rightPart.includes("MULTIPLICATION")) {
-                    exp(stack, num, "MULTIPLICATION");
+                    let second = stack.pop()!;
+                    exp(stack, num, "MULTIPLICATION", second);
                 }
 
                 if (rightPart.includes("DIVISION")) {
-                    exp(stack, num, "DIVISION");
-                }
-
-                if (num) {
-                    const lexer = new Lexer();
-                    tokInput = lexer.tokenize(num.num.toString());
-                }
-
-                if (rightPart.includes("ASSIGNMENT")) {
-                    const typeId = table.info(identifier);
-                    if (!tokInput[0] || typeId !== num.typeNum || typeId !== tokInput[0].type) {
+                    let second = stack.pop()!;
+                    if (second === "0") {
                         const result: ExecResultFailed = {
                             ok: false,
-                            error: new exceptions.analyzer.IncorrectSTypeException(),
+                            error: new exceptions.analyzer.IncorrectSequenceOrderException(),
                             token: offsetArray[i],
                             line: linesArray[i],
                             position: positionArray[i],
                         };
 
                         return result;
+                    }
+                    exp(stack, num, "DIVISION", second);
+                }
+
+                if (num) {
+                    const lexer = new Lexer();
+                    let number = num.num.toString();
+                    if (number[0] === "-") {
+                        number = number.replace("-", "");
+                    }
+                    tokInput = lexer.tokenize(number);
+                }
+
+                if (!isExpression && !isCondition && stack.length === 1) {
+                    const number = stack.pop()!;
+                    if (rightPart.includes("INT_LITERAL")) {
+                        num.num = parseInt(number);
+                        num.typeNum = TokenType.INT_LITERAL;
+                    } else if (rightPart.includes("DOUBLE_LITERAL")) {
+                        num.num = parseFloat(number);
+                        num.typeNum = TokenType.DOUBLE_LITERAL;
+                    }
+                }
+
+                if (rightPart.includes("ASSIGNMENT")) {
+                    const typeId = table.getType(identifier);
+                    if (!tokInput[0] || typeId !== num.typeNum || typeId !== tokInput[0].type) {
+                        const result: ExecResultFailed = {
+                            ok: false,
+                            error: new exceptions.analyzer.IncorrectTypeException(),
+                            token: offsetArray[i],
+                            line: linesArray[i],
+                            position: positionArray[i],
+                        };
+
+                        return result;
+                    } else {
+                        table.update(identifier, num.num.toString());
                     }
                 }
 
@@ -298,8 +381,7 @@ export namespace analyzer {
         return /^\+?(0|[1-9]\d*)$/.test(str);
     }
 
-    function exp(stack: string[], num: Number, name: string): Number {
-        let second = stack.pop();
+    function exp(stack: string[], num: Number, name: string, second: string): Number {
         stack.pop();
         let first = stack.pop();
         if (second !== undefined && first !== undefined) {
