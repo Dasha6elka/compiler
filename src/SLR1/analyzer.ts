@@ -102,6 +102,9 @@ export namespace analyzer {
             typeNum: TokenType.INT,
         };
 
+        let ast: string[] = [];
+        let stackSecond: string[] = [];
+
         while (!end) {
             if (state.value === State.S) {
                 const curr = inputStack[inputStack.length - 1];
@@ -253,7 +256,7 @@ export namespace analyzer {
 
                 if (rightPart.includes("ADDITION")) {
                     let second = stack.pop()!;
-                    exp(stack, num, "ADDITION", second);
+                    exp(stack, num, "ADDITION", second, ast, stackSecond);
                 }
 
                 if (rightPart.includes("SUBTRACTION")) {
@@ -269,13 +272,13 @@ export namespace analyzer {
                         }
                     } else {
                         let second = stack.pop()!;
-                        exp(stack, num, "SUBTRACTION", second);
+                        exp(stack, num, "SUBTRACTION", second, ast, stackSecond);
                     }
                 }
 
                 if (rightPart.includes("MULTIPLICATION")) {
                     let second = stack.pop()!;
-                    exp(stack, num, "MULTIPLICATION", second);
+                    exp(stack, num, "MULTIPLICATION", second, ast, stackSecond);
                 }
 
                 if (rightPart.includes("DIVISION")) {
@@ -291,7 +294,7 @@ export namespace analyzer {
 
                         return result;
                     }
-                    exp(stack, num, "DIVISION", second);
+                    exp(stack, num, "DIVISION", second, ast, stackSecond);
                 }
 
                 if (num) {
@@ -304,7 +307,43 @@ export namespace analyzer {
                 }
 
                 if (!isExpression && !isCondition && stack.length === 1) {
-                    const number = stack.pop()!;
+                    let number = stack.pop()!;
+                    if (number[0] === "-") {
+                        number = number.replace("-", "");
+                        if (isInt(number)) {
+                            num.num = -parseInt(number);
+                            num.typeNum = TokenType.INT_LITERAL;
+                        } else {
+                            num.num = -parseFloat(number);
+                            num.typeNum = TokenType.DOUBLE_LITERAL;
+                        }
+
+                        if (stackSecond.length === 0) {
+                            ast.push("-");
+                            ast.push(number);
+                        } else {
+                            while (stackSecond.length !== 0) {
+                                ast.push(stackSecond.pop()!);
+                            }
+                        }
+                    } else {
+                        if (isInt(number)) {
+                            num.num = parseInt(number);
+                            num.typeNum = TokenType.INT_LITERAL;
+                        } else {
+                            num.num = parseFloat(number);
+                            num.typeNum = TokenType.DOUBLE_LITERAL;
+                        }
+
+                        if (stackSecond.length === 0) {
+                            ast.push(number);
+                        } else {
+                            while (stackSecond.length !== 0) {
+                                ast.push(stackSecond.pop()!);
+                            }
+                        }
+                    }
+
                     if (rightPart.includes("INT_LITERAL")) {
                         num.num = parseInt(number);
                         num.typeNum = TokenType.INT_LITERAL;
@@ -381,14 +420,32 @@ export namespace analyzer {
         return /^\+?(0|[1-9]\d*)$/.test(str);
     }
 
-    function exp(stack: string[], num: Number, name: string, second: string): Number {
-        stack.pop();
+    function exp(
+        stack: string[],
+        num: Number,
+        name: string,
+        second: string,
+        ast: string[],
+        stackSecond: string[],
+    ): Number {
+        const operator = stack.pop();
+        const sizeStackSecond = stackSecond.length;
+        ast.push(`${operator}`);
         let first = stack.pop();
+        while (stackSecond.length !== 0) {
+            ast.push(stackSecond.pop()!);
+        }
         if (second !== undefined && first !== undefined) {
             if (first[0] === "-") {
                 first = first.replace("-", "");
+                ast.push("-");
+                if (sizeStackSecond === 0) {
+                    ast.push(first);
+                }
                 if (second[0] === "-") {
                     second = second.replace("-", "");
+                    stackSecond.push(second);
+                    stackSecond.push("-");
                     if (isInt(second) && isInt(first)) {
                         num.num =
                             name === "ADDITION"
@@ -411,6 +468,7 @@ export namespace analyzer {
                         num.typeNum = TokenType.DOUBLE_LITERAL;
                     }
                 } else {
+                    stackSecond.push(second);
                     if (isInt(second) && isInt(first)) {
                         num.num =
                             name === "ADDITION"
@@ -435,7 +493,12 @@ export namespace analyzer {
                 }
                 stack.push(num.num.toString());
             } else if (second[0] === "-") {
+                if (sizeStackSecond === 0) {
+                    ast.push(first);
+                }
                 second = second.replace("-", "");
+                stackSecond.push(second);
+                stackSecond.push("-");
                 if (isInt(second) && isInt(first)) {
                     num.num =
                         name == "ADDITION"
@@ -459,6 +522,10 @@ export namespace analyzer {
                 }
                 stack.push(num.num.toString());
             } else {
+                if (sizeStackSecond === 0) {
+                    ast.push(first);
+                }
+                stackSecond.push(second);
                 if (isInt(second) && isInt(first)) {
                     num.num =
                         name == "ADDITION"
