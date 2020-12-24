@@ -267,8 +267,7 @@ export namespace analyzer {
                             stack.push(`${minus}${number}`);
                         } else {
                             const realMinus = stack.pop();
-                            stack.push(`${realMinus}${minus}`);
-                            stack.push(number!);
+                            stack.push(`${realMinus}${minus}`, `${number}`);
                         }
                     } else {
                         let second = stack.pop()!;
@@ -355,7 +354,11 @@ export namespace analyzer {
 
                 if (rightPart.includes("ASSIGNMENT")) {
                     const typeId = table.getType(identifier);
-                    if (!tokInput[0] || typeId !== num.typeNum || typeId !== tokInput[0].type) {
+                    if (
+                        !tokInput[0] ||
+                        (typeId === TokenType.INT_LITERAL && tokInput[0].type === TokenType.DOUBLE_LITERAL) ||
+                        (typeId === TokenType.INT_LITERAL && num.typeNum === TokenType.DOUBLE_LITERAL)
+                    ) {
                         const result: ExecResultFailed = {
                             ok: false,
                             error: new exceptions.analyzer.IncorrectTypeException(),
