@@ -190,6 +190,7 @@ export namespace analyzer {
 
                                     if (valueId !== undefined) {
                                         stack.push(valueId);
+                                        tokenList += `${valueId} `;
                                     } else {
                                         const result: ExecResultFailed = {
                                             ok: false,

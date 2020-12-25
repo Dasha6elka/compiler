@@ -2,4 +2,4 @@ int a, b;
 double c, m;
 
 a = 6 / 4;
-b = 1 + a;
+b = (1 + a) * 6 - a / a;
