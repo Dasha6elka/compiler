@@ -1,4 +1,4 @@
-import _ from "lodash";
+import _, { isNumber } from "lodash";
 import { Row, Grammar, State, Literal } from "../common/common";
 import { exceptions } from "./exceptions";
 import { Lexer, Token, TokenType } from "lexer4js";
@@ -96,9 +96,8 @@ export namespace analyzer {
         let prevSymbol = "";
         let identifier = "";
 
-        let tokInput: Token[] = [];
-        let num: Number = {
-            num: 0,
+        let num = {
+            num: Number.MAX_SAFE_INTEGER,
             typeNum: TokenType.INT,
         };
 
@@ -301,16 +300,7 @@ export namespace analyzer {
                     exp(stack, num, "DIVISION", second);
                 }
 
-                if (num) {
-                    const lexer = new Lexer();
-                    let number = num.num.toString();
-                    if (number[0] === "-") {
-                        number = number.replace("-", "");
-                    }
-                    tokInput = lexer.tokenize(number);
-                }
-
-                if (!isExpression && !isCondition && stack.length === 1) {
+                if (!isExpression && !isCondition && stack.length === 1 && num.num === Number.MAX_SAFE_INTEGER) {
                     let number = stack.pop()!;
                     if (number[0] === "-") {
                         number = number.replace("-", "");
@@ -343,9 +333,8 @@ export namespace analyzer {
                 if (rightPart.includes("ASSIGNMENT")) {
                     const typeId = table.getType(identifier);
                     if (
-                        !tokInput[0] ||
-                        (typeId === TokenType.INT_LITERAL && tokInput[0].type === TokenType.DOUBLE_LITERAL) ||
-                        (typeId === TokenType.INT_LITERAL && num.typeNum === TokenType.DOUBLE_LITERAL)
+                        typeId === TokenType.INT_LITERAL &&
+                        num.typeNum === TokenType.DOUBLE_LITERAL
                     ) {
                         const result: ExecResultFailed = {
                             ok: false,
@@ -357,7 +346,12 @@ export namespace analyzer {
 
                         return result;
                     } else {
-                        table.update(identifier, num.num.toString());
+                        if (typeId === TokenType.DOUBLE_LITERAL && isInt(num.num.toString())) {
+                            table.update(identifier, `${num.num}.0`);
+                        } else {
+                            table.update(identifier, num.num.toString());
+                        }
+                        num.num = Number.MAX_SAFE_INTEGER;
                     }
                 }
 
@@ -484,7 +478,7 @@ export namespace analyzer {
                                 : name === "MULTIPLICATION"
                                 ? -parseInt(first) * -parseInt(second)
                                 : name === "DIVISION"
-                                ? -parseInt(first) / -parseInt(second)
+                                ? parseInt((-parseInt(first) / -parseInt(second)).toString())
                                 : -parseInt(first) + parseInt(second);
                         num.typeNum = TokenType.INT_LITERAL;
                     } else {
@@ -506,7 +500,7 @@ export namespace analyzer {
                                 : name === "MULTIPLICATION"
                                 ? -parseInt(first) * parseInt(second)
                                 : name === "DIVISION"
-                                ? -parseInt(first) / parseInt(second)
+                                ? parseInt((-parseInt(first) / parseInt(second)).toString())
                                 : -parseInt(first) - parseInt(second);
                         num.typeNum = TokenType.INT_LITERAL;
                     } else {
@@ -531,7 +525,7 @@ export namespace analyzer {
                             : name === "MULTIPLICATION"
                             ? parseInt(first) * -parseInt(second)
                             : name === "DIVISION"
-                            ? parseInt(first) / -parseInt(second)
+                            ? parseInt((parseInt(first) / -parseInt(second)).toString())
                             : parseInt(first) + parseInt(second);
                     num.typeNum = TokenType.INT_LITERAL;
                 } else {
@@ -554,7 +548,7 @@ export namespace analyzer {
                             : name === "MULTIPLICATION"
                             ? parseInt(first) * parseInt(second)
                             : name === "DIVISION"
-                            ? parseInt(first) / parseInt(second)
+                            ? parseInt((parseInt(first) / parseInt(second)).toString())
                             : parseInt(first) - parseInt(second);
                     num.typeNum = TokenType.INT_LITERAL;
                 } else {
