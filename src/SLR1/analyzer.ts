@@ -102,8 +102,8 @@ export namespace analyzer {
             typeNum: TokenType.INT,
         };
 
-        let ast: string[] = [];
-        let stackSecond: string[] = [];
+        let tokenList: string = "";
+        let ast: (string | number | undefined)[][] = [];
 
         while (!end) {
             if (state.value === State.S) {
@@ -133,6 +133,8 @@ export namespace analyzer {
                         isParams = false;
                     }
                     if (isExpression) {
+                        ast.push(infixToPostfix(tokenize(tokenList)));
+                        tokenList = "";
                         isExpression = false;
                     }
                 }
@@ -181,6 +183,9 @@ export namespace analyzer {
                                     curr === "SUBTRACTION"
                                 ) {
                                     stack.push(symbol);
+                                    tokenList += `${symbol} `;
+                                } else if (curr === "OPENING_BRACE" || curr === "CLOSING_BRACE") {
+                                    tokenList += `${symbol} `;
                                 } else if (curr === "IDENTIFIER") {
                                     const valueId = table.getValue(symbol);
 
@@ -256,7 +261,7 @@ export namespace analyzer {
 
                 if (rightPart.includes("ADDITION")) {
                     let second = stack.pop()!;
-                    exp(stack, num, "ADDITION", second, ast, stackSecond);
+                    exp(stack, num, "ADDITION", second);
                 }
 
                 if (rightPart.includes("SUBTRACTION")) {
@@ -271,13 +276,13 @@ export namespace analyzer {
                         }
                     } else {
                         let second = stack.pop()!;
-                        exp(stack, num, "SUBTRACTION", second, ast, stackSecond);
+                        exp(stack, num, "SUBTRACTION", second);
                     }
                 }
 
                 if (rightPart.includes("MULTIPLICATION")) {
                     let second = stack.pop()!;
-                    exp(stack, num, "MULTIPLICATION", second, ast, stackSecond);
+                    exp(stack, num, "MULTIPLICATION", second);
                 }
 
                 if (rightPart.includes("DIVISION")) {
@@ -293,7 +298,7 @@ export namespace analyzer {
 
                         return result;
                     }
-                    exp(stack, num, "DIVISION", second, ast, stackSecond);
+                    exp(stack, num, "DIVISION", second);
                 }
 
                 if (num) {
@@ -316,15 +321,6 @@ export namespace analyzer {
                             num.num = -parseFloat(number);
                             num.typeNum = TokenType.DOUBLE_LITERAL;
                         }
-
-                        if (stackSecond.length === 0) {
-                            ast.push("-");
-                            ast.push(number);
-                        } else {
-                            while (stackSecond.length !== 0) {
-                                ast.push(stackSecond.pop()!);
-                            }
-                        }
                     } else {
                         if (isInt(number)) {
                             num.num = parseInt(number);
@@ -332,14 +328,6 @@ export namespace analyzer {
                         } else {
                             num.num = parseFloat(number);
                             num.typeNum = TokenType.DOUBLE_LITERAL;
-                        }
-
-                        if (stackSecond.length === 0) {
-                            ast.push(number);
-                        } else {
-                            while (stackSecond.length !== 0) {
-                                ast.push(stackSecond.pop()!);
-                            }
                         }
                     }
 
@@ -408,6 +396,64 @@ export namespace analyzer {
         return result;
     }
 
+    function tokenize(exp: string): (string | number)[] {
+        return exp
+            .replace(/\s/g, "")
+            .split("")
+            .map(token => (/^\d$/.test(token) ? +token : token));
+    }
+
+    function infixToPostfix(infix: (string | number)[]): (string | number | undefined)[] {
+        const presedences = ["-", "+", "*", "/"];
+
+        var operationsStack = [],
+            postfix = [];
+
+        for (let token of infix) {
+            if ("number" === typeof token) {
+                postfix.push(token);
+                continue;
+            }
+
+            let topOfStack = operationsStack[operationsStack.length - 1];
+            if (!operationsStack.length || topOfStack == "(") {
+                operationsStack.push(token);
+                continue;
+            }
+
+            if (token == "(") {
+                operationsStack.push(token);
+                continue;
+            }
+
+            if (token == ")") {
+                pushOperations(operationsStack, postfix);
+                continue;
+            }
+
+            let prevPresedence = presedences.indexOf(topOfStack),
+                currPresedence = presedences.indexOf(token);
+            while (currPresedence < prevPresedence) {
+                let op = operationsStack.pop();
+                postfix.push(op);
+                prevPresedence = presedences.indexOf(operationsStack[operationsStack.length - 1]);
+            }
+            operationsStack.push(token);
+        }
+
+        pushOperations(operationsStack, postfix);
+
+        return postfix;
+    }
+
+    function pushOperations(opsStack: string[], postfix: (string | number | undefined)[]): void {
+        while (opsStack.length) {
+            let op = opsStack.pop();
+            if (op == "(") break;
+            postfix.push(op!);
+        }
+    }
+
     function getTokensSymbol(inputTokens: string[], position: number): string[] {
         let tokensArray: string[] = [];
 
@@ -423,32 +469,14 @@ export namespace analyzer {
         return /^\+?(0|[1-9]\d*)$/.test(str);
     }
 
-    function exp(
-        stack: string[],
-        num: Number,
-        name: string,
-        second: string,
-        ast: string[],
-        stackSecond: string[],
-    ): Number {
-        const operator = stack.pop();
-        const sizeStackSecond = stackSecond.length;
-        ast.push(`${operator}`);
+    function exp(stack: string[], num: Number, name: string, second: string): Number {
+        stack.pop();
         let first = stack.pop();
-        while (stackSecond.length !== 0) {
-            ast.push(stackSecond.pop()!);
-        }
         if (second !== undefined && first !== undefined) {
             if (first[0] === "-") {
                 first = first.replace("-", "");
-                ast.push("-");
-                if (sizeStackSecond === 0) {
-                    ast.push(first);
-                }
                 if (second[0] === "-") {
                     second = second.replace("-", "");
-                    stackSecond.push(second);
-                    stackSecond.push("-");
                     if (isInt(second) && isInt(first)) {
                         num.num =
                             name === "ADDITION"
@@ -471,7 +499,6 @@ export namespace analyzer {
                         num.typeNum = TokenType.DOUBLE_LITERAL;
                     }
                 } else {
-                    stackSecond.push(second);
                     if (isInt(second) && isInt(first)) {
                         num.num =
                             name === "ADDITION"
@@ -496,12 +523,7 @@ export namespace analyzer {
                 }
                 stack.push(num.num.toString());
             } else if (second[0] === "-") {
-                if (sizeStackSecond === 0) {
-                    ast.push(first);
-                }
                 second = second.replace("-", "");
-                stackSecond.push(second);
-                stackSecond.push("-");
                 if (isInt(second) && isInt(first)) {
                     num.num =
                         name == "ADDITION"
@@ -525,10 +547,6 @@ export namespace analyzer {
                 }
                 stack.push(num.num.toString());
             } else {
-                if (sizeStackSecond === 0) {
-                    ast.push(first);
-                }
-                stackSecond.push(second);
                 if (isInt(second) && isInt(first)) {
                     num.num =
                         name == "ADDITION"
