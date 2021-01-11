@@ -1,9 +1,10 @@
-import _, { isNumber } from "lodash";
+import _ from "lodash";
 import { Row, Grammar, State, Literal } from "../common/common";
 import { exceptions } from "./exceptions";
 import { Lexer, Token, TokenType } from "lexer4js";
 import { EMPTY } from "../common/constants";
 import { SymbolsTable } from "./symbolsTable";
+import postfix from "./postfix";
 
 export namespace analyzer {
     type ExecError = exceptions.analyzer.IncorrectSequenceOrderException;
@@ -16,16 +17,16 @@ export namespace analyzer {
     export interface PositionError {
         offset: string;
         symbol: string;
-        line: string;
-        position: string;
+        line: number;
+        position: number;
     }
 
     export interface ExecResultFailed extends ExecResult {
         ok: boolean;
         error: ExecError | null;
         token: string;
-        line: string;
-        position: string;
+        line: number;
+        position: number;
     }
 
     interface Value {
@@ -49,7 +50,7 @@ export namespace analyzer {
             .tokenize(source)
             .map(token => `${token.type} ${token.literal} ${token.line} ${token.position}`);
 
-        const errors: PositionError[] = getTokensSymbol(tokensInput);
+        const errors: PositionError[] = getTokensSymbol(tokensLexer);
 
         const grammarsArray: Grammar[] = [];
 
@@ -108,11 +109,15 @@ export namespace analyzer {
         let tokenList: string = "";
         let ast: (string | number | undefined)[][] = [];
 
+        let symbol = "";
+
         while (!end) {
             if (state.value === State.S) {
                 const curr = inputStack[inputStack.length - 1];
-                const symbol = errors[i].symbol;
-                const isType = curr === "INT" || curr === "DOUBLE" || curr === "BOOLEAN";
+                if (i < errors.length) {
+                    symbol = errors[i].symbol;
+                }
+                const isType = curr === "INT" || curr === "DOUBLE" || curr === "BOOLEAN" || curr === "STRING";
                 const isAssign = curr === "ASSIGNMENT";
 
                 if (isType) {
@@ -121,6 +126,8 @@ export namespace analyzer {
                         type = "INT_LITERAL";
                     } else if (curr === "DOUBLE") {
                         type = "DOUBLE_LITERAL";
+                    } else if (curr === "STRING") {
+                        type = "STRING_LITERAL";
                     } else {
                         type = curr;
                     }
@@ -136,7 +143,8 @@ export namespace analyzer {
                         isParams = false;
                     }
                     if (isExpression) {
-                        ast.push(infixToPostfix(tokenize(tokenList)));
+                        const postfixExpr = postfix(tokenList);
+                        ast.push(postfixExpr);
                         tokenList = "";
                         isExpression = false;
                     }
@@ -186,7 +194,7 @@ export namespace analyzer {
                                     curr === "SUBTRACTION" ||
                                     curr === "TRUE" ||
                                     curr === "FALSE" ||
-                                    curr === "STRING"
+                                    curr === "STRING_LITERAL"
                                 ) {
                                     stack.push(symbol);
                                     tokenList += `${symbol} `;
@@ -252,7 +260,7 @@ export namespace analyzer {
                             error: new exceptions.analyzer.IncorrectTypeException(),
                             token: errors[i].offset,
                             line: errors[i].line,
-                            position: errors[i].symbol,
+                            position: errors[i].position,
                         };
 
                         return result;
@@ -293,7 +301,7 @@ export namespace analyzer {
                             error: new exceptions.analyzer.IncorrectSequenceOrderException(),
                             token: errors[i].offset,
                             line: errors[i].line,
-                            position: errors[i].symbol,
+                            position: errors[i].position,
                         };
 
                         return result;
@@ -323,6 +331,8 @@ export namespace analyzer {
                         value.typeNum = TokenType.DOUBLE_LITERAL;
                     } else if (rightPart.includes("TRUE") || rightPart.includes("FALSE")) {
                         value.typeNum = TokenType.BOOLEAN;
+                    } else if (rightPart.includes("STRING_LITERAL")) {
+                        value.typeNum = TokenType.STRING_LITERAL;
                     }
                 }
 
@@ -337,7 +347,7 @@ export namespace analyzer {
                             error: new exceptions.analyzer.IncorrectTypeException(),
                             token: errors[i].offset,
                             line: errors[i].line,
-                            position: errors[i].symbol,
+                            position: errors[i].position,
                         };
 
                         return result;
@@ -360,7 +370,7 @@ export namespace analyzer {
                                 error: new exceptions.analyzer.IncorrectSequenceOrderException(),
                                 token: errors[i].offset,
                                 line: errors[i].line,
-                                position: errors[i].symbol,
+                                position: errors[i].position,
                             };
 
                             return result;
@@ -386,74 +396,15 @@ export namespace analyzer {
         return result;
     }
 
-    function tokenize(exp: string): (string | number)[] {
-        return exp
-            .replace(/\s/g, "")
-            .split("")
-            .map(token => (/^\d$/.test(token) ? +token : token));
-    }
-
-    function infixToPostfix(infix: (string | number)[]): (string | number | undefined)[] {
-        const presedences = ["-", "+", "*", "/"];
-
-        var operationsStack = [],
-            postfix = [];
-
-        for (let token of infix) {
-            if ("number" === typeof token) {
-                postfix.push(token);
-                continue;
-            }
-
-            let topOfStack = operationsStack[operationsStack.length - 1];
-            if (!operationsStack.length || topOfStack == "(") {
-                operationsStack.push(token);
-                continue;
-            }
-
-            if (token == "(") {
-                operationsStack.push(token);
-                continue;
-            }
-
-            if (token == ")") {
-                pushOperations(operationsStack, postfix);
-                continue;
-            }
-
-            let prevPresedence = presedences.indexOf(topOfStack),
-                currPresedence = presedences.indexOf(token);
-            while (currPresedence < prevPresedence) {
-                let op = operationsStack.pop();
-                postfix.push(op);
-                prevPresedence = presedences.indexOf(operationsStack[operationsStack.length - 1]);
-            }
-            operationsStack.push(token);
-        }
-
-        pushOperations(operationsStack, postfix);
-
-        return postfix;
-    }
-
-    function pushOperations(opsStack: string[], postfix: (string | number | undefined)[]): void {
-        while (opsStack.length) {
-            let op = opsStack.pop();
-            if (op == "(") break;
-            postfix.push(op!);
-        }
-    }
-
-    function getTokensSymbol(inputTokens: string[]): PositionError[] {
+    function getTokensSymbol(tokens: Token[]): PositionError[] {
         let errors: PositionError[] = [];
 
-        inputTokens.forEach(token => {
-            const array = token.split(" ");
+        tokens.forEach(token => {
             errors.push({
-                offset: array[0],
-                symbol: array[1],
-                line: array[2],
-                position: array[3],
+                offset: token.type,
+                symbol: token.literal,
+                line: token.line,
+                position: token.position,
             });
         });
 
@@ -489,26 +440,43 @@ export namespace analyzer {
                 setValue(first, second, name, value, false, true);
                 stack.push(value.value.toString());
             } else if (first[0] === '"' || second[0] === '"') {
-                if (name === "ADDITION") {
-                    first = first.slice(1, -1);
-                    second = second.slice(1, -1);
-                    value.value = first + second;
-                    value.typeNum = TokenType.STRING_LITERAL;
-                } else {
-                    const result: ExecResultFailed = {
-                        ok: false,
-                        error: new exceptions.analyzer.IncorrectSequenceOrderException(),
-                        token: errors[i].offset,
-                        line: errors[i].line,
-                        position: errors[i].symbol,
-                    };
-
-                    return result;
-                }
+                string(name, first, second, value, errors, i);
             } else {
                 setValue(first, second, name, value, false, false);
                 stack.push(value.value.toString());
             }
+        }
+
+        return value;
+    }
+
+    function string(
+        name: string,
+        first: string,
+        second: string,
+        value: Value,
+        errors: PositionError[],
+        i: number,
+    ): Value | ExecResultFailed {
+        if (name === "ADDITION") {
+            if (first[0] === '"') {
+                first = first.slice(1, -1);
+            }
+            if (second[0] === '"') {
+                second = second.slice(1, -1);
+            }
+            value.value = first + second;
+            value.typeNum = TokenType.STRING_LITERAL;
+        } else {
+            const result: ExecResultFailed = {
+                ok: false,
+                error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+                token: errors[i].offset,
+                line: errors[i].line,
+                position: errors[i].position,
+            };
+
+            return result;
         }
 
         return value;

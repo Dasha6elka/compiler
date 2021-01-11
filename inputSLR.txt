@@ -27,6 +27,7 @@
 <Boolean>->false
 <Expression2>-><Number>
 <Expression2>->id
+<Expression2>->"Hi"
 <Number>->5
 <Number>->5.5
 <Assign>->id =<Exp>
