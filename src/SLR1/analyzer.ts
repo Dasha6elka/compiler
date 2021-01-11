@@ -13,6 +13,13 @@ export namespace analyzer {
         error: ExecError | null;
     }
 
+    export interface PositionError {
+        offset: string;
+        symbol: string;
+        line: string;
+        position: string;
+    }
+
     export interface ExecResultFailed extends ExecResult {
         ok: boolean;
         error: ExecError | null;
@@ -42,10 +49,7 @@ export namespace analyzer {
             .tokenize(source)
             .map(token => `${token.type} ${token.literal} ${token.line} ${token.position}`);
 
-        let offsetArray: string[] = getTokensSymbol(tokensInput, 0);
-        let symbolsArray: string[] = getTokensSymbol(tokensInput, 1);
-        let linesArray: string[] = getTokensSymbol(tokensInput, 2);
-        let positionArray: string[] = getTokensSymbol(tokensInput, 3);
+        const errors: PositionError[] = getTokensSymbol(tokensInput);
 
         const grammarsArray: Grammar[] = [];
 
@@ -107,7 +111,7 @@ export namespace analyzer {
         while (!end) {
             if (state.value === State.S) {
                 const curr = inputStack[inputStack.length - 1];
-                const symbol = symbolsArray[i];
+                const symbol = errors[i].symbol;
                 const isType = curr === "INT" || curr === "DOUBLE" || curr === "BOOLEAN";
                 const isAssign = curr === "ASSIGNMENT";
 
@@ -181,7 +185,8 @@ export namespace analyzer {
                                     curr === "MULTIPLICATION" ||
                                     curr === "SUBTRACTION" ||
                                     curr === "TRUE" ||
-                                    curr === "FALSE"
+                                    curr === "FALSE" ||
+                                    curr === "STRING"
                                 ) {
                                     stack.push(symbol);
                                     tokenList += `${symbol} `;
@@ -197,9 +202,9 @@ export namespace analyzer {
                                         const result: ExecResultFailed = {
                                             ok: false,
                                             error: new exceptions.analyzer.IncorrectUseUnassignedVariable(),
-                                            token: offsetArray[i],
-                                            line: linesArray[i],
-                                            position: positionArray[i],
+                                            token: errors[i].offset,
+                                            line: errors[i].line,
+                                            position: errors[i].position,
                                         };
 
                                         return result;
@@ -223,9 +228,9 @@ export namespace analyzer {
                     const result: ExecResultFailed = {
                         ok: false,
                         error: new exceptions.analyzer.IncorrectSequenceOrderException(),
-                        token: offsetArray[i],
-                        line: linesArray[i],
-                        position: positionArray[i],
+                        token: errors[i].offset,
+                        line: errors[i].line,
+                        position: errors[i].position,
                     };
 
                     return result;
@@ -245,9 +250,9 @@ export namespace analyzer {
                         const result: ExecResultFailed = {
                             ok: false,
                             error: new exceptions.analyzer.IncorrectTypeException(),
-                            token: offsetArray[i],
-                            line: linesArray[i],
-                            position: positionArray[i],
+                            token: errors[i].offset,
+                            line: errors[i].line,
+                            position: errors[i].symbol,
                         };
 
                         return result;
@@ -256,7 +261,7 @@ export namespace analyzer {
 
                 if (rightPart.includes("ADDITION")) {
                     let second = stack.pop()!;
-                    exp(stack, value, "ADDITION", second);
+                    exp(stack, value, "ADDITION", second, errors, i);
                 }
 
                 if (rightPart.includes("SUBTRACTION")) {
@@ -271,13 +276,13 @@ export namespace analyzer {
                         }
                     } else {
                         let second = stack.pop()!;
-                        exp(stack, value, "SUBTRACTION", second);
+                        exp(stack, value, "SUBTRACTION", second, errors, i);
                     }
                 }
 
                 if (rightPart.includes("MULTIPLICATION")) {
                     let second = stack.pop()!;
-                    exp(stack, value, "MULTIPLICATION", second);
+                    exp(stack, value, "MULTIPLICATION", second, errors, i);
                 }
 
                 if (rightPart.includes("DIVISION")) {
@@ -286,17 +291,17 @@ export namespace analyzer {
                         const result: ExecResultFailed = {
                             ok: false,
                             error: new exceptions.analyzer.IncorrectSequenceOrderException(),
-                            token: offsetArray[i],
-                            line: linesArray[i],
-                            position: positionArray[i],
+                            token: errors[i].offset,
+                            line: errors[i].line,
+                            position: errors[i].symbol,
                         };
 
                         return result;
                     }
-                    exp(stack, value, "DIVISION", second);
+                    exp(stack, value, "DIVISION", second, errors, i);
                 }
 
-                if (!isExpression && !isCondition && stack.length === 1 && value.value === '') {
+                if (!isExpression && !isCondition && stack.length === 1 && value.value === "") {
                     let val = stack.pop()!;
 
                     if (val[0] === "-") {
@@ -330,9 +335,9 @@ export namespace analyzer {
                         const result: ExecResultFailed = {
                             ok: false,
                             error: new exceptions.analyzer.IncorrectTypeException(),
-                            token: offsetArray[i],
-                            line: linesArray[i],
-                            position: positionArray[i],
+                            token: errors[i].offset,
+                            line: errors[i].line,
+                            position: errors[i].symbol,
                         };
 
                         return result;
@@ -353,9 +358,9 @@ export namespace analyzer {
                             const result: ExecResultFailed = {
                                 ok: false,
                                 error: new exceptions.analyzer.IncorrectSequenceOrderException(),
-                                token: offsetArray[i],
-                                line: linesArray[i],
-                                position: positionArray[i],
+                                token: errors[i].offset,
+                                line: errors[i].line,
+                                position: errors[i].symbol,
                             };
 
                             return result;
@@ -439,22 +444,34 @@ export namespace analyzer {
         }
     }
 
-    function getTokensSymbol(inputTokens: string[], position: number): string[] {
-        let tokensArray: string[] = [];
+    function getTokensSymbol(inputTokens: string[]): PositionError[] {
+        let errors: PositionError[] = [];
 
         inputTokens.forEach(token => {
             const array = token.split(" ");
-            tokensArray.push(array[position]);
+            errors.push({
+                offset: array[0],
+                symbol: array[1],
+                line: array[2],
+                position: array[3],
+            });
         });
 
-        return tokensArray;
+        return errors;
     }
 
     function isInt(str: string): boolean {
         return /^\+?(0|[1-9]\d*)$/.test(str);
     }
 
-    function exp(stack: string[], value: Value, name: string, second: string): Value {
+    function exp(
+        stack: string[],
+        value: Value,
+        name: string,
+        second: string,
+        errors: PositionError[],
+        i: number,
+    ): Value | ExecResultFailed {
         stack.pop();
         let first = stack.pop();
         if (second !== undefined && first !== undefined) {
@@ -471,6 +488,23 @@ export namespace analyzer {
                 second = second.replace("-", "");
                 setValue(first, second, name, value, false, true);
                 stack.push(value.value.toString());
+            } else if (first[0] === '"' || second[0] === '"') {
+                if (name === "ADDITION") {
+                    first = first.slice(1, -1);
+                    second = second.slice(1, -1);
+                    value.value = first + second;
+                    value.typeNum = TokenType.STRING_LITERAL;
+                } else {
+                    const result: ExecResultFailed = {
+                        ok: false,
+                        error: new exceptions.analyzer.IncorrectSequenceOrderException(),
+                        token: errors[i].offset,
+                        line: errors[i].line,
+                        position: errors[i].symbol,
+                    };
+
+                    return result;
+                }
             } else {
                 setValue(first, second, name, value, false, false);
                 stack.push(value.value.toString());
