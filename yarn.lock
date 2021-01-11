@@ -2471,10 +2471,10 @@ levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-lexer4js@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/lexer4js/-/lexer4js-1.2.2.tgz#a65d20a8c21031b2766a02f17a9376d44d7bc416"
-  integrity sha512-lQr7q5IjhzC5xA7w1WUYFHBMokSYF6U9Uhg7gMMzTSJAkilCScErjuDLi3fr68VYv38cSxO4I1cFsDgGy1ARhg==
+lexer4js@^1.2.4:
+  version "1.2.4"
+  resolved "https://registry.yarnpkg.com/lexer4js/-/lexer4js-1.2.4.tgz#6e85cf3cad70768e37cf36b95febadf91ee0ae0f"
+  integrity sha512-zV9kSsEqTfGfuKJf7t2jTn/BZKQJAXTi1RTz5Ih4ekRWqlLAHEYDDGsqdXTn0LcdRTLUBKz4T0mjwl/VvZP4Ww==
   dependencies:
     chalk "^4.1.0"
 
@@ -2500,10 +2500,10 @@ lodash.sortby@^4.7.0:
   resolved "https://registry.yarnpkg.com/lodash.sortby/-/lodash.sortby-4.7.0.tgz#edd14c824e2cc9c1e0b0a1b42bb5210516a42438"
   integrity sha1-7dFMgk4sycHgsKG0K7UhBRakJDg=
 
-lodash@^4.17.13, lodash@^4.17.15:
-  version "4.17.15"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
-  integrity sha512-8xOcRHvCjnocdS5cpwXQXVzmmh5e5+saE2QGoeQmbKmRS6J3VQppPOIt0MnmE+4xlZoumy0GPG0D0MVIQbNA1A==
+lodash@^4.17.13, lodash@^4.17.15, lodash@^4.17.19:
+  version "4.17.19"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.19.tgz#e48ddedbe30b3321783c5b4301fbd353bc1e4a4b"
+  integrity sha512-JNvd8XER9GQX0v2qJgsaN/mzFCNA5BRe/j8JN9d+tWyGLSodKQHKFicdwNYzWwI3wjRnaKPsGj1XkBjx/F96DQ==
 
 lunr@^2.3.8:
   version "2.3.8"
