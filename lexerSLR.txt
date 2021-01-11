@@ -1,5 +1,3 @@
-int a, b;
-double c, m;
+string str;
 
-a = 6 / 4;
-b = (1 + a) * 6 - a / a;
+str = "hi";

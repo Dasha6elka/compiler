@@ -326,15 +326,7 @@ export namespace generator {
                     return;
                 } else if (nonTerminals.includes(firstEl)) {
                     pushToken(firstEl, grammIndex, positionIndex, stack, cells, tempStack);
-                    getTokens(
-                        grammars,
-                        firstEl,
-                        nonTerminals,
-                        stack,
-                        firstGrammar,
-                        cells,
-                        tempStack,
-                    );
+                    getTokens(grammars, firstEl, nonTerminals, stack, firstGrammar, cells, tempStack);
                 } else {
                     pushToken(firstEl, grammIndex, positionIndex, stack, cells, tempStack);
                 }
@@ -367,16 +359,7 @@ export namespace generator {
                     return;
                 } else if (nonTerminals.includes(firstEl)) {
                     pushStateR(firstEl, grammarIndex, cells);
-                    getRTokens(
-                        grammars,
-                        firstEl,
-                        nonTerminals,
-                        stack,
-                        firstGrammar,
-                        cells,
-                        tempStack,
-                        grammarIndex,
-                    );
+                    getRTokens(grammars, firstEl, nonTerminals, stack, firstGrammar, cells, tempStack, grammarIndex);
                 } else {
                     pushStateR(firstEl, grammarIndex, cells);
                 }
@@ -497,7 +480,7 @@ export namespace generator {
                             if (grammar.nonTerminal === column && grammar.rightPart[0] === EMPTY) {
                                 pushStateR(END, i, cells);
                             }
-                        })
+                        });
 
                         if (nonTerminals.includes(column)) {
                             getRTokens(

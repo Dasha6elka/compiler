@@ -5,6 +5,7 @@
 <Type>->int
 <Type>->double
 <Type>->boolean
+<Type>->string
 <idList>->, id<idList>
 <idList>->e
 <Body>-><Operator>;<Body>
@@ -19,14 +20,21 @@
 <Expression1>-><Expression1>/<Expression2>
 <Expression1>-><Expression2>
 <Expression2>->-<Expression2>
-<Expression2>->(<Expression>)
+<Expression2>->(<Exp>)
+<Exp>-><Expression>
+<Exp>-><Boolean>
+<Boolean>->true
+<Boolean>->false
 <Expression2>-><Number>
 <Expression2>->id
 <Number>->5
 <Number>->5.5
-<Assign>->id =<Expression>
+<Assign>->id =<Exp>
 <If>->if (<Condition>) {<Body>}<Else>
-<Condition>-><Expression>==<Expression>
+<Condition>-><Boolean>
+<Condition>-><Expression><Cond>
+<Cond>->==<Expression>
+<Cond>->e
 <Else>->else {<Body>}
 <Else>->e
 <While>->while (<Condition>) {<Body>}

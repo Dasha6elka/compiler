@@ -21,8 +21,8 @@ export namespace analyzer {
         position: string;
     }
 
-    interface Number {
-        num: number;
+    interface Value {
+        value: string;
         typeNum: TokenType;
     }
 
@@ -96,8 +96,8 @@ export namespace analyzer {
         let prevSymbol = "";
         let identifier = "";
 
-        let num = {
-            num: Number.MAX_SAFE_INTEGER,
+        let value: Value = {
+            value: "",
             typeNum: TokenType.INT,
         };
 
@@ -179,13 +179,15 @@ export namespace analyzer {
                                     curr === "ADDITION" ||
                                     curr === "DIVISION" ||
                                     curr === "MULTIPLICATION" ||
-                                    curr === "SUBTRACTION"
+                                    curr === "SUBTRACTION" ||
+                                    curr === "TRUE" ||
+                                    curr === "FALSE"
                                 ) {
                                     stack.push(symbol);
                                     tokenList += `${symbol} `;
                                 } else if (curr === "OPENING_BRACE" || curr === "CLOSING_BRACE") {
                                     tokenList += `${symbol} `;
-                                } else if (curr === "IDENTIFIER") {
+                                } else if (curr === "IDENTIFIER" && isAssign) {
                                     const valueId = table.getValue(symbol);
 
                                     if (valueId !== undefined) {
@@ -239,14 +241,7 @@ export namespace analyzer {
                     let tokRight = new Lexer().tokenize(right);
                     let tokLeft = new Lexer().tokenize(left);
 
-                    if (
-                        (!tokRight[0] && !tokLeft[0]) ||
-                        (tokRight[0].type !== tokLeft[0].type &&
-                            tokRight[0].type !== "INT_LITERAL" &&
-                            tokLeft[0].type !== "INT_LITERAL" &&
-                            tokRight[0].type !== "DOUBLE_LITERAL" &&
-                            tokLeft[0].type !== "DOUBLE_LITERAL")
-                    ) {
+                    if (!tokRight[0] && !tokLeft[0] && tokRight[0].type !== tokLeft[0].type) {
                         const result: ExecResultFailed = {
                             ok: false,
                             error: new exceptions.analyzer.IncorrectTypeException(),
@@ -261,7 +256,7 @@ export namespace analyzer {
 
                 if (rightPart.includes("ADDITION")) {
                     let second = stack.pop()!;
-                    exp(stack, num, "ADDITION", second);
+                    exp(stack, value, "ADDITION", second);
                 }
 
                 if (rightPart.includes("SUBTRACTION")) {
@@ -276,13 +271,13 @@ export namespace analyzer {
                         }
                     } else {
                         let second = stack.pop()!;
-                        exp(stack, num, "SUBTRACTION", second);
+                        exp(stack, value, "SUBTRACTION", second);
                     }
                 }
 
                 if (rightPart.includes("MULTIPLICATION")) {
                     let second = stack.pop()!;
-                    exp(stack, num, "MULTIPLICATION", second);
+                    exp(stack, value, "MULTIPLICATION", second);
                 }
 
                 if (rightPart.includes("DIVISION")) {
@@ -298,44 +293,39 @@ export namespace analyzer {
 
                         return result;
                     }
-                    exp(stack, num, "DIVISION", second);
+                    exp(stack, value, "DIVISION", second);
                 }
 
-                if (!isExpression && !isCondition && stack.length === 1 && num.num === Number.MAX_SAFE_INTEGER) {
-                    let number = stack.pop()!;
-                    if (number[0] === "-") {
-                        number = number.replace("-", "");
-                        if (isInt(number)) {
-                            num.num = -parseInt(number);
-                            num.typeNum = TokenType.INT_LITERAL;
-                        } else {
-                            num.num = -parseFloat(number);
-                            num.typeNum = TokenType.DOUBLE_LITERAL;
-                        }
+                if (!isExpression && !isCondition && stack.length === 1 && value.value === '') {
+                    let val = stack.pop()!;
+
+                    if (val[0] === "-") {
+                        val = val.replace("-", "");
+                        value.value = `-${val}`;
                     } else {
-                        if (isInt(number)) {
-                            num.num = parseInt(number);
-                            num.typeNum = TokenType.INT_LITERAL;
-                        } else {
-                            num.num = parseFloat(number);
-                            num.typeNum = TokenType.DOUBLE_LITERAL;
-                        }
+                        value.value = val;
+                    }
+
+                    if (isInt(val)) {
+                        value.typeNum = TokenType.INT_LITERAL;
+                    } else {
+                        value.typeNum = TokenType.DOUBLE_LITERAL;
                     }
 
                     if (rightPart.includes("INT_LITERAL")) {
-                        num.num = parseInt(number);
-                        num.typeNum = TokenType.INT_LITERAL;
+                        value.typeNum = TokenType.INT_LITERAL;
                     } else if (rightPart.includes("DOUBLE_LITERAL")) {
-                        num.num = parseFloat(number);
-                        num.typeNum = TokenType.DOUBLE_LITERAL;
+                        value.typeNum = TokenType.DOUBLE_LITERAL;
+                    } else if (rightPart.includes("TRUE") || rightPart.includes("FALSE")) {
+                        value.typeNum = TokenType.BOOLEAN;
                     }
                 }
 
                 if (rightPart.includes("ASSIGNMENT")) {
                     const typeId = table.getType(identifier);
                     if (
-                        typeId === TokenType.INT_LITERAL &&
-                        num.typeNum === TokenType.DOUBLE_LITERAL
+                        (typeId === TokenType.INT_LITERAL && value.typeNum === TokenType.DOUBLE_LITERAL) ||
+                        typeId !== value.typeNum
                     ) {
                         const result: ExecResultFailed = {
                             ok: false,
@@ -347,12 +337,12 @@ export namespace analyzer {
 
                         return result;
                     } else {
-                        if (typeId === TokenType.DOUBLE_LITERAL && isInt(num.num.toString())) {
-                            table.update(identifier, `${num.num}.0`);
+                        if (typeId === TokenType.DOUBLE_LITERAL && isInt(value.value.toString())) {
+                            table.update(identifier, `${value.value}.0`);
                         } else {
-                            table.update(identifier, num.num.toString());
+                            table.update(identifier, value.value.toString());
                         }
-                        num.num = Number.MAX_SAFE_INTEGER;
+                        value.value = "";
                     }
                 }
 
@@ -464,7 +454,7 @@ export namespace analyzer {
         return /^\+?(0|[1-9]\d*)$/.test(str);
     }
 
-    function exp(stack: string[], num: Number, name: string, second: string): Number {
+    function exp(stack: string[], value: Value, name: string, second: string): Value {
         stack.pop();
         let first = stack.pop();
         if (second !== undefined && first !== undefined) {
@@ -472,101 +462,62 @@ export namespace analyzer {
                 first = first.replace("-", "");
                 if (second[0] === "-") {
                     second = second.replace("-", "");
-                    if (isInt(second) && isInt(first)) {
-                        num.num =
-                            name === "ADDITION"
-                                ? -parseInt(first) - parseInt(second)
-                                : name === "MULTIPLICATION"
-                                ? -parseInt(first) * -parseInt(second)
-                                : name === "DIVISION"
-                                ? parseInt((-parseInt(first) / -parseInt(second)).toString())
-                                : -parseInt(first) + parseInt(second);
-                        num.typeNum = TokenType.INT_LITERAL;
-                    } else {
-                        num.num =
-                            name === "ADDITION"
-                                ? -parseFloat(first) - parseFloat(second)
-                                : name === "MULTIPLICATION"
-                                ? -parseFloat(first) * -parseFloat(second)
-                                : name === "DIVISION"
-                                ? -parseFloat(first) / -parseFloat(second)
-                                : -parseFloat(first) + parseFloat(second);
-                        num.typeNum = TokenType.DOUBLE_LITERAL;
-                    }
+                    setValue(first, second, name, value, true, true);
                 } else {
-                    if (isInt(second) && isInt(first)) {
-                        num.num =
-                            name === "ADDITION"
-                                ? -parseInt(first) + parseInt(second)
-                                : name === "MULTIPLICATION"
-                                ? -parseInt(first) * parseInt(second)
-                                : name === "DIVISION"
-                                ? parseInt((-parseInt(first) / parseInt(second)).toString())
-                                : -parseInt(first) - parseInt(second);
-                        num.typeNum = TokenType.INT_LITERAL;
-                    } else {
-                        num.num =
-                            name === "ADDITION"
-                                ? -parseFloat(first) + parseFloat(second)
-                                : name === "MULTIPLICATION"
-                                ? -parseFloat(first) * parseFloat(second)
-                                : name === "DIVISION"
-                                ? -parseFloat(first) / parseFloat(second)
-                                : -parseFloat(first) - parseFloat(second);
-                        num.typeNum = TokenType.DOUBLE_LITERAL;
-                    }
+                    setValue(first, second, name, value, true, false);
                 }
-                stack.push(num.num.toString());
+                stack.push(value.value.toString());
             } else if (second[0] === "-") {
                 second = second.replace("-", "");
-                if (isInt(second) && isInt(first)) {
-                    num.num =
-                        name == "ADDITION"
-                            ? parseInt(first) - parseInt(second)
-                            : name === "MULTIPLICATION"
-                            ? parseInt(first) * -parseInt(second)
-                            : name === "DIVISION"
-                            ? parseInt((parseInt(first) / -parseInt(second)).toString())
-                            : parseInt(first) + parseInt(second);
-                    num.typeNum = TokenType.INT_LITERAL;
-                } else {
-                    num.num =
-                        name == "ADDITION"
-                            ? parseFloat(first) - parseFloat(second)
-                            : name === "MULTIPLICATION"
-                            ? parseFloat(first) * -parseFloat(second)
-                            : name === "DIVISION"
-                            ? parseFloat(first) / -parseFloat(second)
-                            : parseFloat(first) + parseFloat(second);
-                    num.typeNum = TokenType.DOUBLE_LITERAL;
-                }
-                stack.push(num.num.toString());
+                setValue(first, second, name, value, false, true);
+                stack.push(value.value.toString());
             } else {
-                if (isInt(second) && isInt(first)) {
-                    num.num =
-                        name == "ADDITION"
-                            ? parseInt(first) + parseInt(second)
-                            : name === "MULTIPLICATION"
-                            ? parseInt(first) * parseInt(second)
-                            : name === "DIVISION"
-                            ? parseInt((parseInt(first) / parseInt(second)).toString())
-                            : parseInt(first) - parseInt(second);
-                    num.typeNum = TokenType.INT_LITERAL;
-                } else {
-                    num.num =
-                        name == "ADDITION"
-                            ? parseFloat(first) + parseFloat(second)
-                            : name === "MULTIPLICATION"
-                            ? parseFloat(first) * parseFloat(second)
-                            : name === "DIVISION"
-                            ? parseFloat(first) / parseFloat(second)
-                            : parseFloat(first) - parseFloat(second);
-                    num.typeNum = TokenType.DOUBLE_LITERAL;
-                }
-                stack.push(num.num.toString());
+                setValue(first, second, name, value, false, false);
+                stack.push(value.value.toString());
             }
         }
 
-        return num;
+        return value;
+    }
+
+    function setValue(
+        first: string,
+        second: string,
+        name: string,
+        value: Value,
+        firstMinus: boolean,
+        secondMinus: boolean,
+    ): Value {
+        let left = 0;
+        let right = 0;
+
+        if (isInt(second) && isInt(first)) {
+            left = parseInt(first);
+            right = parseInt(second);
+            value.typeNum = TokenType.INT_LITERAL;
+        } else {
+            left = parseFloat(first);
+            right = parseFloat(second);
+            value.typeNum = TokenType.DOUBLE_LITERAL;
+        }
+
+        if (firstMinus) {
+            left = -left;
+        }
+        if (secondMinus) {
+            right = -right;
+        }
+
+        let val =
+            name === "ADDITION"
+                ? left + right
+                : name === "MULTIPLICATION"
+                ? left * right
+                : name === "DIVISION"
+                ? parseInt((left / right).toString())
+                : left - right;
+        value.value = val.toString();
+
+        return value;
     }
 }
