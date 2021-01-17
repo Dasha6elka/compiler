@@ -154,8 +154,11 @@ export namespace analyzer {
                     isCondition = true;
                 }
 
-                if (isCondition && symbol === ")") {
+                if (isCondition && symbol === "{") {
                     isCondition = false;
+                    if (stack.length === 1) {
+                        stack.pop();
+                    }
                 }
 
                 const a = table.isHas(symbol, type);
@@ -200,7 +203,7 @@ export namespace analyzer {
                                     tokenList += `${symbol} `;
                                 } else if (curr === "OPENING_BRACE" || curr === "CLOSING_BRACE") {
                                     tokenList += `${symbol} `;
-                                } else if (curr === "IDENTIFIER" && isAssign) {
+                                } else if (curr === "IDENTIFIER" && (isExpression || isCondition)) {
                                     const valueId = table.getValue(symbol);
 
                                     if (valueId !== undefined) {
@@ -265,6 +268,9 @@ export namespace analyzer {
 
                         return result;
                     }
+
+                    value.value = "";
+                    value.typeNum = TokenType.INT;
                 }
 
                 if (rightPart.includes("ADDITION")) {
@@ -309,7 +315,7 @@ export namespace analyzer {
                     exp(stack, value, "DIVISION", second, errors, i);
                 }
 
-                if (!isExpression && !isCondition && stack.length === 1 && value.value === "") {
+                if (!isExpression && !isCondition && stack.length === 1) {
                     let val = stack.pop()!;
 
                     if (val[0] === "-") {
@@ -321,6 +327,10 @@ export namespace analyzer {
 
                     if (isInt(val)) {
                         value.typeNum = TokenType.INT_LITERAL;
+                    } else if (val[0] === '"') {
+                        value.typeNum = TokenType.STRING_LITERAL;
+                    } else if (val === "true" || val === "false") {
+                        value.typeNum = TokenType.BOOLEAN;
                     } else {
                         value.typeNum = TokenType.DOUBLE_LITERAL;
                     }
@@ -338,26 +348,25 @@ export namespace analyzer {
 
                 if (rightPart.includes("ASSIGNMENT")) {
                     const typeId = table.getType(identifier);
-                    if (
-                        (typeId === TokenType.INT_LITERAL && value.typeNum === TokenType.DOUBLE_LITERAL) ||
-                        typeId !== value.typeNum
-                    ) {
-                        const result: ExecResultFailed = {
-                            ok: false,
-                            error: new exceptions.analyzer.IncorrectTypeException(),
-                            token: errors[i].offset,
-                            line: errors[i].line,
-                            position: errors[i].position,
-                        };
-
-                        return result;
-                    } else {
-                        if (typeId === TokenType.DOUBLE_LITERAL && isInt(value.value.toString())) {
+                    if (typeId !== value.typeNum || value.value == "NaN") {
+                        if (typeId === TokenType.DOUBLE_LITERAL && value.typeNum === TokenType.INT_LITERAL) {
                             table.update(identifier, `${value.value}.0`);
+                            value.value = "";
+                            value.typeNum = TokenType.INT;
                         } else {
-                            table.update(identifier, value.value.toString());
+                            const result: ExecResultFailed = {
+                                ok: false,
+                                error: new exceptions.analyzer.IncorrectTypeException(),
+                                token: errors[i].offset,
+                                line: errors[i].line,
+                                position: errors[i].position,
+                            };
+                            return result;
                         }
+                    } else {
+                        table.update(identifier, value.value.toString());
                         value.value = "";
+                        value.typeNum = TokenType.INT;
                     }
                 }
 
@@ -434,17 +443,15 @@ export namespace analyzer {
                 } else {
                     setValue(first, second, name, value, true, false);
                 }
-                stack.push(value.value.toString());
             } else if (second[0] === "-") {
                 second = second.replace("-", "");
                 setValue(first, second, name, value, false, true);
-                stack.push(value.value.toString());
             } else if (first[0] === '"' || second[0] === '"') {
                 string(name, first, second, value, errors, i);
             } else {
                 setValue(first, second, name, value, false, false);
-                stack.push(value.value.toString());
             }
+            stack.push(value.value.toString());
         }
 
         return value;
@@ -465,7 +472,7 @@ export namespace analyzer {
             if (second[0] === '"') {
                 second = second.slice(1, -1);
             }
-            value.value = first + second;
+            value.value = '"' + first + second + '"';
             value.typeNum = TokenType.STRING_LITERAL;
         } else {
             const result: ExecResultFailed = {

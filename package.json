@@ -1,5 +1,5 @@
 {
-  "name": "Compiler",
+  "name": "compiler",
   "version": "1.0.0",
   "description": "Simple Compiler written in TypeScript",
   "scripts": {
@@ -13,7 +13,7 @@
     "@types/lodash": "^4.14.157",
     "@types/node": "^14.0.1",
     "fs": "^0.0.1-security",
-    "lexer4js": "^1.2.4",
+    "lexer4js": "1.2.5-no-floats",
     "lodash": "^4.17.15",
     "ts-node": "^8.10.1",
     "typescript": "^3.9.2"

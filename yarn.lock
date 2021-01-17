@@ -2471,10 +2471,10 @@ levn@~0.3.0:
     prelude-ls "~1.1.2"
     type-check "~0.3.2"
 
-lexer4js@^1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/lexer4js/-/lexer4js-1.2.2.tgz#a65d20a8c21031b2766a02f17a9376d44d7bc416"
-  integrity sha512-lQr7q5IjhzC5xA7w1WUYFHBMokSYF6U9Uhg7gMMzTSJAkilCScErjuDLi3fr68VYv38cSxO4I1cFsDgGy1ARhg==
+lexer4js@1.2.5-no-floats:
+  version "1.2.5-no-floats"
+  resolved "https://registry.yarnpkg.com/lexer4js/-/lexer4js-1.2.5-no-floats.tgz#c9ac7f66e1b1d23db222924e7c49775253e4d035"
+  integrity sha512-3CzIPEPowU5MFwiJF06AwwawfttMEiJf3C8B1HI+XuzZ+BxS74RS+I+rW3Co2C/3i1rS+h3G8jN77P5lpBrPKg==
   dependencies:
     chalk "^4.1.0"
 
