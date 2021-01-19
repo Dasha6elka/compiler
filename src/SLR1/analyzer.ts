@@ -4,7 +4,8 @@ import { exceptions } from "./exceptions";
 import { Lexer, Token, TokenType } from "lexer4js";
 import { EMPTY } from "../common/constants";
 import { SymbolsTable } from "./symbolsTable";
-import postfix from "./postfix";
+import { infixToPostfix } from "./postfix";
+import { createAst } from "./ast";
 
 export namespace analyzer {
     type ExecError = exceptions.analyzer.IncorrectSequenceOrderException;
@@ -143,14 +144,14 @@ export namespace analyzer {
                         isParams = false;
                     }
                     if (isExpression) {
-                        const postfixExpr = postfix(tokenList);
+                        const postfixExpr = infixToPostfix(tokenList);
                         ast.push(postfixExpr);
                         tokenList = "";
                         isExpression = false;
                     }
                 }
 
-                if (prevSymbol === "if" && symbol === "(") {
+                if ((prevSymbol === "if" || prevSymbol === "while") && symbol === "(") {
                     isCondition = true;
                 }
 
@@ -396,6 +397,8 @@ export namespace analyzer {
         }
 
         table.delete();
+
+        const tree = createAst(source);
 
         const result: ExecResult = {
             ok: true,

@@ -2,6 +2,8 @@
  * Operator precedence mapping.
  */
 const PRECEDENCE: Record<string, number> = {
+    "if": 10,
+    "while": 10,
     "(": 9,
     "!": 8,
     "*": 7,
@@ -18,13 +20,16 @@ const PRECEDENCE: Record<string, number> = {
     "&&": 3,
     "||": 2,
     "?": 1,
-    "?:": 1,
+    "=": 0,
+    "\n": 0,
+    "}": 0,
+    "{": 0,
 };
 
 /**
  * Characters which signal pair opening, to be terminated by terminators.
  */
-const OPENERS: string[] = ["(", "?"];
+const OPENERS: string[] = ["(", "?", "if", "while"];
 
 /**
  * Characters which signal pair termination, the value an array with the
@@ -33,7 +38,7 @@ const OPENERS: string[] = ["(", "?"];
  */
 const TERMINATORS: Record<string, string[]> = {
     ")": ["("],
-    ":": ["?", "?:"],
+    ":": ["?"],
 };
 
 /**
@@ -41,7 +46,7 @@ const TERMINATORS: Record<string, string[]> = {
  *
  * @type {RegExp}
  */
-const PATTERN: RegExp = /<=|>=|==|!=|&&|\|\||\?:|\(|!|\*|\/|%|\+|-|<|>|\?|\)|:/;
+const PATTERN: RegExp = /<=|>=|==|!=|&&|\|\||\(|!|\*|\/|%|\+|-|<|>|\?|\)|:|if|while|}|{|\n|=/;
 
 /**
  * Given a C expression, returns the equivalent postfix (Reverse Polish)
@@ -58,7 +63,7 @@ const PATTERN: RegExp = /<=|>=|==|!=|&&|\|\||\?:|\(|!|\*|\/|%|\+|-|<|>|\?|\)|:/;
  * // ⇒ [ 'n', '1', '>' ]
  * ```
  */
-export default function postfix(expression: string): string[] {
+export function infixToPostfix(expression: string): string[] {
     let terms: string[] = [];
     let stack: string[] = [];
 
