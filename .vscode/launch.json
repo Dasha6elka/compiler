@@ -19,7 +19,7 @@
                 "${workspaceRoot}/node_modules/**/*.js",
                 "<node_internals>/**/*.js"
             ],
-            "smartStep": false
+            "smartStep": false,
         },
         {
             "name": "Launch App",
@@ -30,7 +30,11 @@
             "sourceMaps": true,
             "cwd": "${workspaceRoot}",
             "protocol": "inspector",
-            "smartStep": false
+            "smartStep": false,
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/**",
+                "!**/node_modules/**"
+            ],
         }
     ]
 }

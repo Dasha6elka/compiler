@@ -5,7 +5,7 @@ import { Lexer, Token, TokenType } from "lexer4js";
 import { EMPTY } from "../common/constants";
 import { SymbolsTable } from "./symbolsTable";
 import { infixToPostfix } from "./postfix";
-import { createAst } from "./ast";
+import { createAst } from "./ast.v2";
 
 export namespace analyzer {
     type ExecError = exceptions.analyzer.IncorrectSequenceOrderException;
@@ -398,7 +398,7 @@ export namespace analyzer {
 
         table.delete();
 
-        const tree = createAst(source);
+        createAst(source);
 
         const result: ExecResult = {
             ok: true,

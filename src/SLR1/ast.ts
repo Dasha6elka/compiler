@@ -1,60 +1,13 @@
-// import { createVisitor, parse } from "java-ast";
 import graphviz, { Node } from "graphviz";
 import { infixToPostfix } from "./postfix";
 import { nanoid } from "nanoid";
 import { escapeRegExp } from "lodash";
 
-// export function createAst(text: string) {
-//     const source = `
-// class Wrapper {
-//     Wrapper() {
-//         ${text}
-//     }
-// }
-//     `;
-
-//     const ast = parse(source);
-
-//     const g = graphviz.graph("G");
-
-//     const treeChildrenIndices = [0, 2, 1, 0, 0, 2];
-//     const rootChild = ast.getChild(0);
-
-//     const contructorMethodContext = treeChildrenIndices.reduce((acc, childIndex) => {
-//         return acc.getChild(childIndex);
-//     }, rootChild);
-
-//     const treeLeaves: Array<typeof contructorMethodContext> = [];
-
-//     const stack: Array<typeof contructorMethodContext> = [contructorMethodContext];
-//     while (stack.length !== 0) {
-//         const head = stack.shift();
-
-//         if (head && head.childCount > 0) {
-//             const graphHead = g.addNode(`${head.constructor.name}\n${head.text}`);
-
-//             for (let i = 0; i < head.childCount; i++) {
-//                 const child = head.getChild(i);
-
-//                 const graphChild = g.addNode(`${child.constructor.name}\n${child.text}`);
-//                 g.addEdge(graphHead, graphChild);
-
-//                 stack.unshift(child);
-//             }
-//         }  else if (head) {
-//             treeLeaves.push(head);
-//         }
-//     }
-
-//     g.output("png", "graph.png");
-
-//     return null;
-// }
-
 interface ExtendedNode extends Node {
     operator: boolean;
 }
 
+/** @deprecated */
 export function createAst(text: string) {
     let source = text
         .replace(/int .+;/gm, "")
