@@ -17,13 +17,13 @@ export function createAst(text: string) {
         .replace(/string .+;/gm, "")
         .replace(/;/g, " ");
 
-    let match: RegExpMatchArray | null = null;
-    while ((match = source.match(/(?<=\s|\()-(([0-9]\.?([0-9]+)?)|[a-z]|\(.*\))/))) {
-        const exp = match[0];
-        const regexp = new RegExp(escapeRegExp(exp), "m");
-        const replacement = `(0${exp})`;
-        source = source.replace(regexp, replacement);
-    }
+    // let match: RegExpMatchArray | null = null;
+    // while ((match = source.match(/(?<=\s|\()-(([0-9]\.?([0-9]+)?)|[a-z]|\(.*\))/))) {
+    //     const exp = match[0];
+    //     const regexp = new RegExp(escapeRegExp(exp), "m");
+    //     const replacement = `(0${exp})`;
+    //     source = source.replace(regexp, replacement);
+    // }
 
     const g = graphviz.digraph("G");
     const addNode = makeAddNode(g);
@@ -31,6 +31,25 @@ export function createAst(text: string) {
 
     const ast = acorn.parse(source, { ecmaVersion: "latest" });
     walk.recursive(ast, undefined, {
+        UnaryExpression: (node, _, c) => {
+            let _root: GrapNode | undefined;
+            if ((_root = stack.pop())) {
+                const _operator = addNode(node.operator);
+
+                if (isLiteral(node.argument)) {
+                    const _argument = addNode(node.argument.value);
+                    g.addEdge(_operator, _argument);
+                }
+
+                if (isBinaryOrUnaryExpression(node.argument)) {
+                    stack.push(_operator);
+                    c(node.argument, _);
+                }
+
+                g.addEdge(_root, _operator);
+            }
+        },
+
         BinaryExpression: (node, _, c) => {
             let _root: GrapNode | undefined;
             if ((_root = stack.pop())) {
@@ -41,14 +60,19 @@ export function createAst(text: string) {
                     g.addEdge(_operator, _left);
                 }
 
-                if (isLiteral(node.right)) {
-                    const _right = addNode(node.right.value);
-                    g.addEdge(_operator, _right);
-                }
-
                 if (isIdentifier(node.left)) {
                     const _left = addNode(node.left.name);
                     g.addEdge(_operator, _left);
+                }
+
+                if (isBinaryOrUnaryExpression(node.left)) {
+                    stack.push(_operator);
+                    c(node.left, _);
+                }
+
+                if (isLiteral(node.right)) {
+                    const _right = addNode(node.right.value);
+                    g.addEdge(_operator, _right);
                 }
 
                 if (isIdentifier(node.right)) {
@@ -56,12 +80,7 @@ export function createAst(text: string) {
                     g.addEdge(_operator, _right);
                 }
 
-                if (isBinaryExpression(node.left)) {
-                    stack.push(_operator);
-                    c(node.left, _);
-                }
-
-                if (isBinaryExpression(node.right)) {
+                if (isBinaryOrUnaryExpression(node.right)) {
                     stack.push(_operator);
                     c(node.right, _);
                 }
@@ -74,7 +93,7 @@ export function createAst(text: string) {
             const _operator = addNode(node.operator);
             const _left = addNode(node.left.name);
 
-            if (isBinaryExpression(node.right)) {
+            if (isBinaryOrUnaryExpression(node.right)) {
                 stack.push(_operator);
                 c(node.right, _);
             } else if (isLiteral(node.right)) {
@@ -98,11 +117,22 @@ export function createAst(text: string) {
             const _else = addNode("else");
 
             const _test = addNode(test.operator);
-            const _left = addNode(test.left.name);
-            const _right = addNode(test.right.raw);
 
-            g.addEdge(_test, _left);
-            g.addEdge(_test, _right);
+            if (isBinaryOrUnaryExpression(test.left)) {
+                stack.push(_test);
+                c(test.left, _);
+            } else if (isLiteral(test.left)) {
+                const _left = addNode(test.left.name);
+                g.addEdge(_test, _left);
+            }
+
+            if (isBinaryOrUnaryExpression(test.right)) {
+                stack.push(_test);
+                c(test.right, _);
+            } else if (isLiteral(test.right)) {
+                const _right = addNode(test.right.raw);
+                g.addEdge(_test, _right);
+            }
 
             g.addEdge(_if, _test);
             g.addEdge(_if, _then);
@@ -136,11 +166,22 @@ export function createAst(text: string) {
             const _do = addNode("do");
 
             const _test = addNode(test.operator);
-            const _left = addNode(test.left.name);
-            const _right = addNode(test.right.raw);
 
-            g.addEdge(_test, _left);
-            g.addEdge(_test, _right);
+            if (isBinaryOrUnaryExpression(test.left)) {
+                stack.push(_test);
+                c(test.left, _);
+            } else if (isLiteral(test.left)) {
+                const _left = addNode(test.left.name);
+                g.addEdge(_test, _left);
+            }
+
+            if (isBinaryOrUnaryExpression(test.right)) {
+                stack.push(_test);
+                c(test.right, _);
+            } else if (isLiteral(test.right)) {
+                const _right = addNode(test.right.raw);
+                g.addEdge(_test, _right);
+            }
 
             g.addEdge(_while, _test);
             g.addEdge(_while, _do);
@@ -171,8 +212,8 @@ function isLiteral(node: AcornNode): boolean {
     return node.type === "Literal";
 }
 
-function isBinaryExpression(node: AcornNode): boolean {
-    return node.type === "BinaryExpression";
+function isBinaryOrUnaryExpression(node: AcornNode): boolean {
+    return node.type === "BinaryExpression" || node.type === "UnaryExpression";
 }
 
 function isIdentifier(node: AcornNode): boolean {

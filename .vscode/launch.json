@@ -31,10 +31,6 @@
             "cwd": "${workspaceRoot}",
             "protocol": "inspector",
             "smartStep": false,
-            "resolveSourceMapLocations": [
-                "${workspaceFolder}/**",
-                "!**/node_modules/**"
-            ],
         }
     ]
 }
